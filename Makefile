@@ -3,10 +3,10 @@
 install: install-backend install-frontend
 
 install-backend:
-cd backend && pip install -r requirements-dev.txt
+	(cd backend && pip install -r requirements-dev.txt)
 
 install-frontend:
-cd frontend && npm install
+	(cd frontend && npm install)
 
 lint:
 cd backend && ruff check .

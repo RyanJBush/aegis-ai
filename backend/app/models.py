@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -14,7 +14,11 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     app_data = relationship("AppData", back_populates="owner")
     scans = relationship("Scan", back_populates="requested_by")
@@ -27,7 +31,11 @@ class AppData(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     owner = relationship("User", back_populates="app_data")
 
@@ -40,7 +48,11 @@ class Scan(Base):
     status: Mapped[str] = mapped_column(String(20), default="completed", nullable=False)
     summary: Mapped[str] = mapped_column(Text, default="", nullable=False)
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     requested_by = relationship("User", back_populates="scans")
     vulnerabilities = relationship("Vulnerability", back_populates="scan")
@@ -55,6 +67,10 @@ class Vulnerability(Base):
     severity: Mapped[str] = mapped_column(String(20), nullable=False)
     details: Mapped[str] = mapped_column(Text, nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
     scan = relationship("Scan", back_populates="vulnerabilities")
