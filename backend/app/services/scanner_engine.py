@@ -35,6 +35,8 @@ class ScannerRule:
 
 
 PROFILE_ORDER = {"quick": 1, "standard": 2, "deep": 3}
+# Keep aligned with persistence constraints and UI evidence panel readability.
+MAX_EVIDENCE_LENGTH = 250
 
 
 def _dedupe_key(rule_key: str, evidence: str) -> str:
@@ -43,7 +45,11 @@ def _dedupe_key(rule_key: str, evidence: str) -> str:
 
 
 def _regex_matches(payload: str, patterns: list[str]) -> list[str]:
-    return [match.group(0)[:250] for pattern in patterns for match in re.finditer(pattern, payload)]
+    return [
+        match.group(0)[:MAX_EVIDENCE_LENGTH]
+        for pattern in patterns
+        for match in re.finditer(pattern, payload)
+    ]
 
 
 def _detect_sqli(payload: str) -> list[str]:

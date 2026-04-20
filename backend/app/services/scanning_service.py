@@ -12,6 +12,8 @@ from app.services.scanner_engine import build_default_registry
 
 logger = logging.getLogger(__name__)
 DEFAULT_SCANNER = build_default_registry()
+# Prevent oversized DB rows while preserving actionable execution context.
+MAX_FAILURE_REASON_LENGTH = 1000
 
 
 class ScanningService:
@@ -95,7 +97,7 @@ class ScanningService:
         except Exception as exc:
             scan.status = "failed"
             scan.completed_at = datetime.now(UTC)
-            scan.failure_reason = str(exc)[:1000]
+            scan.failure_reason = str(exc)[:MAX_FAILURE_REASON_LENGTH]
             if scan.started_at:
                 scan.duration_ms = int((scan.completed_at - scan.started_at).total_seconds() * 1000)
             AuditService.log(

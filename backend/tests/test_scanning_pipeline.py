@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.models.audit_log import AuditLog
 
@@ -78,7 +79,7 @@ def test_scan_profile_and_workflow_updates(client: TestClient) -> None:
     assert review_response.json()["status"] == "reviewed"
 
 
-def test_kpi_summary_and_audit_scaffolding(client: TestClient, db_session) -> None:
+def test_kpi_summary_and_audit_scaffolding(client: TestClient, db_session: Session) -> None:
     token = authenticate_analyst(client)
     run = client.post(
         "/api/v1/scanning/run",
