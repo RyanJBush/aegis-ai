@@ -1,75 +1,116 @@
 import logging
-import re
-from collections.abc import Iterable
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
 from app.models.scan import Scan
 from app.models.vulnerability import Vulnerability
 from app.schemas.scanning import ScanRequest, ScanResponse
+from app.services.audit_service import AuditService
 from app.services.input_security import validate_scan_target
+from app.services.scanner_engine import build_default_registry
 
 logger = logging.getLogger(__name__)
-
-SQLI_PATTERNS = [
-    re.compile(r"(?i)\bUNION\s+SELECT\b"),
-    re.compile(r"(?i)(\bOR\b\s+\d+=\d+|\bOR\b\s+'\w+'='\w+')"),
-    re.compile(r"(?i)--"),
-]
-
-XSS_PATTERNS = [
-    re.compile(r"(?i)<script\b[^>]*>.*?</script>"),
-    re.compile(r"(?i)onerror\s*=\s*['\"].*?['\"]"),
-    re.compile(r"(?i)javascript:\s*"),
-]
+DEFAULT_SCANNER = build_default_registry()
+# Prevent oversized DB rows while preserving actionable execution context.
+MAX_FAILURE_REASON_LENGTH = 1000
 
 
 class ScanningService:
     @staticmethod
-    def _extract_matches(payload: str, patterns: Iterable[re.Pattern[str]]) -> list[str]:
-        matches: list[str] = []
-        for pattern in patterns:
-            matches.extend(match.group(0) for match in pattern.finditer(payload))
-        return matches
-
-    @staticmethod
     def run_scan(db: Session, user_id: int, payload: ScanRequest) -> ScanResponse:
         clean_target = validate_scan_target(payload.target.strip().lower())
-        scan = Scan(target=clean_target, payload=payload.payload, requested_by_user_id=user_id, status="completed")
+        scan = Scan(
+            target=clean_target,
+            payload=payload.payload,
+            profile=payload.profile,
+            baseline_scan_id=payload.baseline_scan_id,
+            requested_by_user_id=user_id,
+            status="queued",
+        )
         db.add(scan)
         db.flush()
+        AuditService.log(
+            db,
+            action="scan_queued",
+            entity_type="scan",
+            entity_id=scan.id,
+            actor_user_id=user_id,
+            details={"target": clean_target, "profile": payload.profile},
+        )
 
-        findings: list[Vulnerability] = []
-        sql_matches = ScanningService._extract_matches(payload.payload, SQLI_PATTERNS)
-        xss_matches = ScanningService._extract_matches(payload.payload, XSS_PATTERNS)
-
-        for evidence in sql_matches:
-            normalized_evidence = evidence[:250]
-            findings.append(
-                Vulnerability(
-                    scan_id=scan.id,
-                    rule_key="SQLI",
-                    severity="high",
-                    title="Potential SQL Injection pattern",
-                    evidence=normalized_evidence,
-                    remediation="Use parameterized queries and strict input validation.",
-                )
+        try:
+            scan.status = "running"
+            scan.started_at = datetime.now(UTC)
+            AuditService.log(
+                db,
+                action="scan_started",
+                entity_type="scan",
+                entity_id=scan.id,
+                actor_user_id=user_id,
             )
 
-        for evidence in xss_matches:
-            normalized_evidence = evidence[:250]
-            findings.append(
-                Vulnerability(
-                    scan_id=scan.id,
-                    rule_key="XSS",
-                    severity="medium",
-                    title="Potential Cross-Site Scripting pattern",
-                    evidence=normalized_evidence,
-                    remediation="Contextually encode output and apply a strict CSP.",
+            findings: list[Vulnerability] = []
+            seen_dedupe_keys: set[str] = set()
+            suppression_keys = set(payload.suppression_keys)
+            for finding in DEFAULT_SCANNER.run(payload.payload, payload.profile):
+                if finding.dedupe_key in seen_dedupe_keys:
+                    continue
+                seen_dedupe_keys.add(finding.dedupe_key)
+                is_suppressed = finding.dedupe_key in suppression_keys
+                findings.append(
+                    Vulnerability(
+                        scan_id=scan.id,
+                        rule_key=finding.rule_key,
+                        severity=finding.severity,
+                        confidence=finding.confidence,
+                        reason_code=finding.reason_code,
+                        owasp_category=finding.owasp_category,
+                        cwe_id=finding.cwe_id,
+                        title=finding.title,
+                        evidence=finding.evidence,
+                        remediation=finding.remediation,
+                        secure_example=finding.secure_example,
+                        dedupe_key=finding.dedupe_key,
+                        is_suppressed=is_suppressed,
+                        status="false_positive" if is_suppressed else "open",
+                    )
                 )
-            )
 
-        db.add_all(findings)
+            scan.status = "completed"
+            scan.completed_at = datetime.now(UTC)
+            if scan.started_at:
+                scan.duration_ms = int((scan.completed_at - scan.started_at).total_seconds() * 1000)
+
+            db.add_all(findings)
+            AuditService.log(
+                db,
+                action="scan_completed",
+                entity_type="scan",
+                entity_id=scan.id,
+                actor_user_id=user_id,
+                details={
+                    "total_findings": len(findings),
+                    "suppressed_findings": sum(1 for f in findings if f.is_suppressed),
+                },
+            )
+        except Exception as exc:
+            scan.status = "failed"
+            scan.completed_at = datetime.now(UTC)
+            scan.failure_reason = str(exc)[:MAX_FAILURE_REASON_LENGTH]
+            if scan.started_at:
+                scan.duration_ms = int((scan.completed_at - scan.started_at).total_seconds() * 1000)
+            AuditService.log(
+                db,
+                action="scan_failed",
+                entity_type="scan",
+                entity_id=scan.id,
+                actor_user_id=user_id,
+                details={"failure_reason": scan.failure_reason},
+            )
+            db.commit()
+            raise
+
         db.commit()
         db.refresh(scan)
 
@@ -86,7 +127,29 @@ class ScanningService:
         return ScanResponse(
             id=scan.id,
             target=scan.target,
+            profile=scan.profile,
             status=scan.status,
             created_at=scan.created_at,
+            started_at=scan.started_at,
+            completed_at=scan.completed_at,
+            duration_ms=scan.duration_ms,
+            failure_reason=scan.failure_reason,
             vulnerabilities_found=len(findings),
         )
+
+    @staticmethod
+    def mark_reviewed(db: Session, user_id: int, scan_id: int) -> Scan | None:
+        scan = db.query(Scan).filter(Scan.id == scan_id).first()
+        if not scan:
+            return None
+        scan.status = "reviewed"
+        AuditService.log(
+            db,
+            action="scan_reviewed",
+            entity_type="scan",
+            entity_id=scan.id,
+            actor_user_id=user_id,
+        )
+        db.commit()
+        db.refresh(scan)
+        return scan
