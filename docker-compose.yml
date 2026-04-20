@@ -1,36 +1,36 @@
-version: '3.9'
+version: "3.9"
+
 services:
   db:
     image: postgres:16-alpine
-    restart: unless-stopped
     environment:
-      POSTGRES_DB: aegis
       POSTGRES_USER: aegis
-      POSTGRES_PASSWORD: aegis_dev_password
+      POSTGRES_PASSWORD: aegis
+      POSTGRES_DB: aegis
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - '5432:5432'
 
   backend:
     build:
       context: ./backend
-    environment:
-      DATABASE_URL: postgresql+psycopg2://aegis:aegis_dev_password@db:5432/aegis
-      JWT_SECRET: change-me-in-production
-      FRONTEND_ORIGIN: http://localhost:5173
+    env_file:
+      - ./backend/.env.example
+    ports:
+      - "8000:8000"
     depends_on:
       - db
-    ports:
-      - '8000:8000'
 
   frontend:
     build:
       context: ./frontend
+    env_file:
+      - ./frontend/.env.example
+    ports:
+      - "3000:3000"
     depends_on:
       - backend
-    ports:
-      - '5173:80'
 
 volumes:
   postgres_data:

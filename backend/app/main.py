@@ -1,72 +1,49 @@
-from collections import defaultdict, deque
-from time import time
+import logging
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.config import settings
-from app.database import Base, engine
-from app.routers import app_data, auth, scan, vulnerabilities
-
-Base.metadata.create_all(bind=engine)
+from app.api.router import api_router
+from app.core.config import settings
+from app.db.session import engine
+from app.models.base import Base
 
 
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Referrer-Policy"] = "no-referrer"
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
-        )
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-        return response
+def configure_logging() -> None:
+    logging.basicConfig(
+        level=settings.log_level,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
 
 
-class RateLimitMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app):
-        super().__init__(app)
-        self.requests: dict[str, deque] = defaultdict(deque)
+def create_application() -> FastAPI:
+    configure_logging()
+    app = FastAPI(
+        title=settings.app_name,
+        version="0.2.0",
+        docs_url="/docs",
+        redoc_url="/redoc",
+    )
 
-    async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host if request.client else "unknown"
-        key = f"{client_ip}:{request.url.path}"
-        now = time()
-        window = 60
-        max_requests = 20 if request.url.path.startswith("/api/auth") else 60
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-        queue = self.requests[key]
-        while queue and queue[0] <= now - window:
-            queue.popleft()
+    @app.on_event("startup")
+    def startup() -> None:
+        Base.metadata.create_all(bind=engine)
 
-        if len(queue) >= max_requests:
-            return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+    app.include_router(api_router, prefix=settings.api_v1_prefix)
 
-        queue.append(now)
-        return await call_next(request)
+    @app.get("/health", tags=["health"])
+    def health_check() -> dict[str, str]:
+        return {"status": "ok"}
 
-
-app = FastAPI(title=settings.app_name)
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(RateLimitMiddleware)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.frontend_origin],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    return app
 
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
-
-
-app.include_router(auth.router)
-app.include_router(app_data.router)
-app.include_router(scan.router)
-app.include_router(vulnerabilities.router)
+app = create_application()

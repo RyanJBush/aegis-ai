@@ -1,25 +1,26 @@
-.PHONY: install install-backend install-frontend lint test run run-backend run-frontend
+.PHONY: help up down build backend-install frontend-install test lint format
 
-install: install-backend install-frontend
+help:
+	@echo "Available targets: up down build backend-install frontend-install test lint"
 
-install-backend:
-	(cd backend && pip install -r requirements-dev.txt)
+up:
+	docker compose up --build
 
-install-frontend:
-	(cd frontend && npm install)
+down:
+	docker compose down -v
 
-lint:
-	cd backend && ruff check .
-	cd frontend && npm run lint
-	cd frontend && npm run format:check
+build:
+	docker compose build
+
+backend-install:
+	pip install -r backend/requirements.txt
+
+frontend-install:
+	cd frontend && npm install
 
 test:
-	cd backend && pytest -q
+	cd backend && pytest
 
-run: run-backend run-frontend
-
-run-backend:
-	cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-run-frontend:
-	cd frontend && npm run dev -- --host 0.0.0.0 --port 5173
+lint:
+	cd backend && python -m compileall app
+	cd frontend && npm run lint

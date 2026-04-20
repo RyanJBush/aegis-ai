@@ -1,35 +1,91 @@
-# Aegis AI
+# Aegis AI Monorepo
 
-A production-style monorepo for a secure web application and AI-assisted vulnerability scanner.
+Security-focused monorepo scaffold for:
+- FastAPI backend
+- React frontend
+- PostgreSQL
+- JWT authentication + RBAC
+- Detection pipeline for SQLi/XSS patterns
+- Dockerized local environment + GitHub Actions CI
 
-## Stack
+## Repository Structure
 
-- **Backend:** FastAPI, SQLAlchemy, PostgreSQL, JWT auth + RBAC
-- **Frontend:** React, Vite, Tailwind CSS
-- **Security:** Input validation, rate limiting, secure headers
-- **Infra:** Docker, docker-compose, GitHub Actions
-- **Quality:** pytest, ruff, eslint, prettier
-
-## Repository layout
-
-- `/backend` FastAPI API and tests
-- `/frontend` React web app
-- `/docs` project docs
-- root infra and contributor files
-
-## Quick start
-
-```bash
-docker-compose up --build
+```text
+backend/     FastAPI app (routers, models, services, tests)
+frontend/    React app (layouts, pages, API service placeholders)
+docs/        Architecture and API docs
 ```
 
-Or run locally:
+## Backend Security Capabilities (Implemented)
+- JWT-based register/login/me flow.
+- RBAC roles: `admin`, `analyst`, `viewer`.
+- Secure auth input constraints (email + password length policy).
+- Scan pipeline that evaluates payloads using SQLi/XSS detection rules.
+- Vulnerability persistence and reporting summary by severity/rule.
+- Basic logging for account creation, login events, and scans.
 
+## Quick Start
+
+### 1) Environment files
 ```bash
-make install
-make lint
-make test
-make run-backend
-# in another shell
-make run-frontend
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 ```
+
+### 2) Run with Docker
+```bash
+make up
+```
+
+Services:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+### 3) Run locally without Docker
+Backend:
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+uvicorn app.main:app --app-dir backend --reload
+```
+
+Frontend:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Example API Flow
+```bash
+# Register analyst
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"analyst@example.com","password":"StrongPassw0rd!","role":"analyst"}'
+
+# Login
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"analyst@example.com","password":"StrongPassw0rd!"}' | jq -r .access_token)
+
+# Run scan
+curl -X POST http://localhost:8000/api/v1/scanning/run \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"target":"https://app.example.com/login","payload":"\" OR 1=1 -- <script>alert(1)</script>"}'
+```
+
+## Security Notes
+- Replace default JWT secret and all credentials before production use.
+- Add token refresh/revocation and account lockout controls.
+- Add Alembic migrations and audit logging.
+- Expand detection coverage and tune false-positive handling.
+
+
+## Frontend Security Dashboard Pages
+- Dashboard (`/`): posture metrics + vulnerability table + scan history.
+- App Interface (`/app-interface`): payload input UI for scan execution workflow.
+- Scan Results (`/scan-results`): historical scan statuses and detected findings.
+- Vulnerability Detail (`/vulnerabilities/:id`): deep technical breakdown and remediation guidance.
