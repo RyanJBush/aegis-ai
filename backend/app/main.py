@@ -2,7 +2,9 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import SQLAlchemyError
 
+from app import models  # noqa: F401
 from app.api.router import api_router
 from app.core.config import settings
 from app.db.session import engine
@@ -35,7 +37,10 @@ def create_application() -> FastAPI:
 
     @app.on_event("startup")
     def startup() -> None:
-        Base.metadata.create_all(bind=engine)
+        try:
+            Base.metadata.create_all(bind=engine)
+        except SQLAlchemyError:
+            logging.getLogger(__name__).warning("Database unavailable on startup; continuing without auto-create")
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
 
