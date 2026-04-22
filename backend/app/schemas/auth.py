@@ -5,9 +5,14 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from app.models.user import Role
 
 
-class Token(BaseModel):
+class TokenPair(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(min_length=40)
 
 
 class RegisterRequest(BaseModel):
@@ -25,6 +30,7 @@ class UserAuthResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    workspace_id: int
     email: EmailStr
     role: Role
     created_at: datetime

@@ -88,6 +88,29 @@ def _detect_sensitive_data_exposure(payload: str) -> list[str]:
     )
 
 
+def _detect_secret_leakage(payload: str) -> list[str]:
+    return _regex_matches(
+        payload,
+        [
+            r"(?i)ghp_[0-9A-Za-z]{36}",
+            r"(?i)xox[baprs]-[0-9A-Za-z-]{10,}",
+            r"(?i)BEGIN\s+(RSA|EC|OPENSSH)\s+PRIVATE\s+KEY",
+            r'(?i)api[_-]?token\s*[:=]\s*[\"\'].+[\"\']',
+        ],
+    )
+
+def _detect_config_audit_issues(payload: str) -> list[str]:
+    return _regex_matches(
+        payload,
+        [
+            r"(?i)allow_privilege_escalation\s*:\s*true",
+            r"(?i)runAsNonRoot\s*:\s*false",
+            r"(?i)latest\s*$",
+            r"(?i)verify_ssl\s*[:=]\s*false",
+        ],
+    )
+
+
 class ScannerRegistry:
     def __init__(self) -> None:
         self._rules: dict[str, ScannerRule] = {}
@@ -210,6 +233,37 @@ def build_default_registry() -> ScannerRegistry:
             secure_example="Store secrets in secret managers and reference them via runtime injection.",
             profile_minimum="deep",
             detector=_detect_sensitive_data_exposure,
+        )
+    )
+
+    registry.register(
+        ScannerRule(
+            key="SECRET_DETECTION",
+            title="Potential secret token/private key exposure",
+            severity="critical",
+            confidence=0.9,
+            reason_code="SECRET_LEAKAGE_PATTERN",
+            owasp_category="A02:2021-Cryptographic Failures",
+            cwe_id="CWE-798",
+            remediation="Remove committed secrets, rotate credentials, and enforce secret scanning pre-commit checks.",
+            secure_example="Use secret managers and inject credentials at runtime via environment/identity bindings.",
+            profile_minimum="deep",
+            detector=_detect_secret_leakage,
+        )
+    )
+    registry.register(
+        ScannerRule(
+            key="CONFIG_AUDIT",
+            title="Configuration hardening issue in deployment/config file",
+            severity="high",
+            confidence=0.82,
+            reason_code="CONFIG_AUDIT_PATTERN",
+            owasp_category="A05:2021-Security Misconfiguration",
+            cwe_id="CWE-16",
+            remediation="Harden deployment config defaults and enforce policy checks in CI.",
+            secure_example="Set runAsNonRoot=true, avoid :latest tags, and keep TLS verification enabled.",
+            profile_minimum="standard",
+            detector=_detect_config_audit_issues,
         )
     )
     return registry
