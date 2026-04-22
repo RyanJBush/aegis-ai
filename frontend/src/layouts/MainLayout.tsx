@@ -2,8 +2,10 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 
 const navItems = [
   { path: '/', label: 'Dashboard' },
-  { path: '/app-interface', label: 'App Interface' },
   { path: '/scan-results', label: 'Scan Results' },
+  { path: '/scanning', label: 'Scan Ops' },
+  { path: '/remediation', label: 'Remediation Queue' },
+  { path: '/app-interface', label: 'App Interface' },
 ];
 
 function MainLayout() {

@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     jwt_secret_key: str = Field(default="CHANGE_ME_IN_PROD", alias="JWT_SECRET_KEY")
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    refresh_token_expire_minutes: int = 60 * 24 * 7
+
+    max_failed_login_attempts: int = 5
+    account_lockout_minutes: int = 15
+    auth_rate_limit_per_minute: int = 60
+    alert_webhook_url: str | None = Field(default=None, alias="ALERT_WEBHOOK_URL")
 
     cors_origins: list[str] = ["http://localhost:3000"]
 

@@ -10,6 +10,7 @@ class Scan(Base):
     __tablename__ = "scans"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id"), nullable=False, index=True)
     target: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     payload: Mapped[str] = mapped_column(Text, nullable=False)
     requested_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)

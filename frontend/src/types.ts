@@ -4,7 +4,7 @@ export type Vulnerability = {
   id: string;
   title: string;
   severity: Severity;
-  status: 'open' | 'triaged' | 'resolved';
+  status: 'open' | 'triaged' | 'fixed' | 'accepted_risk' | 'false_positive';
   cvss: number;
   endpoint: string;
   rule: string;
@@ -17,8 +17,21 @@ export type Vulnerability = {
 export type ScanJob = {
   id: string;
   target: string;
-  status: 'completed' | 'running' | 'failed';
+  status: 'completed' | 'running' | 'failed' | 'queued';
   findings: number;
   startedAt: string;
   duration: string;
+};
+
+export type ScanTrendPoint = {
+  day: string;
+  scans: number;
+  findings: number;
+  avg_duration_ms: number;
+};
+
+export type FindingTimelineEvent = {
+  event_type: string;
+  message: string;
+  created_at: string;
 };
