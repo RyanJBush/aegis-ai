@@ -261,7 +261,7 @@ def test_observability_metrics_and_rule_changes(db_session: Session) -> None:
     assert metrics.failed_scans == 1
     assert metrics.success_rate_percent == pytest.approx(66.67, abs=0.01)
     assert metrics.average_duration_ms == pytest.approx((120 + 180 + 0) / 3, abs=0.01)
-    assert metrics.average_findings_per_scan == pytest.approx(3 / 3, abs=0.01)
+    assert metrics.average_findings_per_scan == pytest.approx(1.0, abs=0.01)
 
     rule_change = ObservabilityService.create_rule_change(
         db_session,
