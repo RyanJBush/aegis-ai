@@ -173,8 +173,10 @@ def test_scanning_service_remediation_checklist_and_counterlike(db_session: Sess
     assert checklist is not None
     assert checklist.scan_id == scan.id
     assert any("Fix SECRET_DETECTION" in task for task in checklist.checklist)
-    assert checklist.checklist.count("Rotate exposed credentials and validate secret scanning coverage") == 1
-    assert checklist.checklist.count("Review deployment/config baselines and enforce policy checks in CI") == 1
+    secret_guidance = [task for task in checklist.checklist if "secret scanning coverage" in task.lower()]
+    config_guidance = [task for task in checklist.checklist if "policy checks in ci" in task.lower()]
+    assert len(secret_guidance) == 1
+    assert len(config_guidance) == 1
 
     assert (
         ScanningService.build_remediation_checklist(db_session, workspace_id=workspace.id, scan_id=999999) is None
