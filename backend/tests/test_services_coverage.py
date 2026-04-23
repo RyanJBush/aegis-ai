@@ -291,59 +291,47 @@ def test_observability_metrics_and_rule_changes(db_session: Session) -> None:
     assert listed[0].id == rule_change.id
 
 
-def test_alert_service_notifies_webhook_and_handles_errors() -> None:
-    original_url = settings.alert_webhook_url
-    try:
-        settings.alert_webhook_url = None
-        with patch("app.services.alert_service.request.urlopen") as urlopen_mock:
-            AlertService.notify_critical_findings(scan_id=1, target="https://target", critical_count=2)
-            assert not urlopen_mock.called
+def test_alert_service_notifies_webhook_and_handles_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _MockResponse:
+        def __init__(self, status: int) -> None:
+            self.status = status
 
-        settings.alert_webhook_url = "https://alerts.example.com/webhook"
-        with patch("app.services.alert_service.request.urlopen") as urlopen_mock:
-            AlertService.notify_critical_findings(scan_id=1, target="https://target", critical_count=0)
-            assert not urlopen_mock.called
+        def __enter__(self) -> "_MockResponse":
+            return self
 
-        class _Response:
-            status = 202
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
 
-            def __enter__(self) -> "_Response":
-                return self
+    monkeypatch.setattr(settings, "alert_webhook_url", None)
+    with patch("app.services.alert_service.request.urlopen") as urlopen_mock:
+        AlertService.notify_critical_findings(scan_id=1, target="https://target", critical_count=2)
+        assert not urlopen_mock.called
 
-            def __exit__(self, exc_type, exc, tb) -> bool:
-                return False
+    monkeypatch.setattr(settings, "alert_webhook_url", "https://alerts.example.com/webhook")
+    with patch("app.services.alert_service.request.urlopen") as urlopen_mock:
+        AlertService.notify_critical_findings(scan_id=1, target="https://target", critical_count=0)
+        assert not urlopen_mock.called
 
-        with patch("app.services.alert_service.request.urlopen", return_value=_Response()) as urlopen_mock:
-            AlertService.notify_critical_findings(scan_id=42, target="https://target", critical_count=3)
-            assert urlopen_mock.called
-            req = urlopen_mock.call_args.args[0]
-            assert req.full_url == settings.alert_webhook_url
-            assert req.method == "POST"
+    with patch("app.services.alert_service.request.urlopen", return_value=_MockResponse(202)) as urlopen_mock:
+        AlertService.notify_critical_findings(scan_id=42, target="https://target", critical_count=3)
+        assert urlopen_mock.called
+        req = urlopen_mock.call_args.args[0]
+        assert req.full_url == settings.alert_webhook_url
+        assert req.method == "POST"
 
-        class _ErrorResponse:
-            status = 500
+    with (
+        patch("app.services.alert_service.request.urlopen", return_value=_MockResponse(500)),
+        patch("app.services.alert_service.logger.warning") as logger_warning,
+    ):
+        AlertService.notify_critical_findings(scan_id=43, target="https://target", critical_count=4)
+        logger_warning.assert_called_once()
 
-            def __enter__(self) -> "_ErrorResponse":
-                return self
-
-            def __exit__(self, exc_type, exc, tb) -> bool:
-                return False
-
-        with (
-            patch("app.services.alert_service.request.urlopen", return_value=_ErrorResponse()),
-            patch("app.services.alert_service.logger.warning") as logger_warning,
-        ):
-            AlertService.notify_critical_findings(scan_id=43, target="https://target", critical_count=4)
-            logger_warning.assert_called_once()
-
-        with (
-            patch("app.services.alert_service.request.urlopen", side_effect=RuntimeError("network down")),
-            patch("app.services.alert_service.logger.exception") as logger_exception,
-        ):
-            AlertService.notify_critical_findings(scan_id=7, target="https://target", critical_count=1)
-            logger_exception.assert_called_once()
-    finally:
-        settings.alert_webhook_url = original_url
+    with (
+        patch("app.services.alert_service.request.urlopen", side_effect=RuntimeError("network down")),
+        patch("app.services.alert_service.logger.exception") as logger_exception,
+    ):
+        AlertService.notify_critical_findings(scan_id=7, target="https://target", critical_count=1)
+        logger_exception.assert_called_once()
 
 
 @pytest.mark.parametrize(
