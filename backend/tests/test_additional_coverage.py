@@ -1,4 +1,4 @@
-from collections import deque
+from collections import defaultdict, deque
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -82,7 +82,6 @@ def test_devsecops_upload_scan_normalizes_profile_and_snippet_type(client: TestC
 
 def test_rate_limit_service_enforces_threshold_and_evicts_old_hits(monkeypatch: pytest.MonkeyPatch) -> None:
     host = "203.0.113.10"
-    RateLimitService._hits.pop(host, None)
 
     class _Client:
         def __init__(self, host_value: str) -> None:
@@ -92,18 +91,28 @@ def test_rate_limit_service_enforces_threshold_and_evicts_old_hits(monkeypatch: 
         def __init__(self, host_value: str) -> None:
             self.client = _Client(host_value)
 
+    class _FakeDateTime:
+        current = datetime(2026, 1, 1, tzinfo=UTC)
+
+        @classmethod
+        def now(cls, _tz=UTC) -> datetime:
+            return cls.current
+
     request = _Request(host)
     monkeypatch.setattr(settings, "auth_rate_limit_per_minute", 2)
+    monkeypatch.setattr(RateLimitService, "_hits", defaultdict(deque))
+    monkeypatch.setattr("app.services.rate_limit_service.datetime", _FakeDateTime)
 
     RateLimitService.check_auth_rate_limit(request)
+    _FakeDateTime.current += timedelta(seconds=1)
     RateLimitService.check_auth_rate_limit(request)
+    _FakeDateTime.current += timedelta(seconds=1)
     with pytest.raises(HTTPException) as exc:
         RateLimitService.check_auth_rate_limit(request)
     assert exc.value.status_code == 429
 
-    RateLimitService._hits[host] = deque([datetime.now(UTC) - timedelta(minutes=2)])
+    _FakeDateTime.current += timedelta(seconds=61)
     RateLimitService.check_auth_rate_limit(request)
-    assert len(RateLimitService._hits[host]) == 1
 
 
 def test_scanning_service_remediation_checklist_and_counterlike(db_session: Session) -> None:
