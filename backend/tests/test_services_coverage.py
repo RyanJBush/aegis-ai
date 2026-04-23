@@ -259,7 +259,7 @@ def test_observability_metrics_and_rule_changes(db_session: Session) -> None:
     assert metrics.total_scans == 3
     assert metrics.completed_scans == 2
     assert metrics.failed_scans == 1
-    assert metrics.success_rate_percent == 66.67
+    assert metrics.success_rate_percent == pytest.approx(66.67, abs=0.01)
     assert metrics.average_duration_ms == 100.0
     assert metrics.average_findings_per_scan == 1.0
 
