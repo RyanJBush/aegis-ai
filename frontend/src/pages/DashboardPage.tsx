@@ -5,7 +5,7 @@ import PageHeader from '../components/PageHeader';
 import ScanHistoryList from '../components/ScanHistoryList';
 import VulnerabilityTable from '../components/VulnerabilityTable';
 import { scanHistory, vulnerabilities as fallbackVulnerabilities } from '../services/mockData';
-import { fetchScanTrends, fetchVulnerabilities } from '../services/platformApi';
+import { fetchScans, fetchVulnerabilities } from '../services/platformApi';
 import { ScanJob, Vulnerability } from '../types';
 
 function DashboardPage() {
@@ -17,17 +17,18 @@ function DashboardPage() {
     let active = true;
     async function load() {
       try {
-        const [vulns, trends] = await Promise.all([fetchVulnerabilities(), fetchScanTrends()]);
+        const [vulns, scans] = await Promise.all([fetchVulnerabilities(), fetchScans(8)]);
         if (active) {
           setVulnerabilities(vulns);
           setScanItems(
-            trends.map((point, idx) => ({
-              id: `TREND-${idx + 1}`,
-              target: point.day,
-              status: 'completed',
-              findings: point.findings,
-              startedAt: point.day,
-              duration: `${Math.round(point.avg_duration_ms)}ms avg`,
+            scans.map((scan) => ({
+              id: scan.id,
+              target: scan.target,
+              status: scan.status === 'reviewed' ? 'completed' : scan.status,
+              findings: scan.findings,
+              startedAt: scan.createdAt,
+              duration: scan.durationMs ? `${scan.durationMs}ms` : 'pending',
+              scanId: scan.id,
             })),
           );
           setError(null);

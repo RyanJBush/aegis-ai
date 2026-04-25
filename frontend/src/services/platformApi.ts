@@ -1,5 +1,5 @@
-import { getJson } from './api';
-import { FindingTimelineEvent, ScanJob, ScanTrendPoint, Vulnerability } from '../types';
+import { getJson, postJson as postJsonRequest } from './api';
+import { FindingTimelineEvent, ScanJob, ScanRecord, ScanTrendPoint, Vulnerability } from '../types';
 
 type RawVuln = {
   id: number;
@@ -19,6 +19,37 @@ type RawScanJob = {
   created_at: string;
   started_at?: string | null;
   completed_at?: string | null;
+};
+
+type RawScanRecord = {
+  id: number;
+  target: string;
+  profile: ScanRecord['profile'];
+  status: ScanRecord['status'];
+  created_at: string;
+  duration_ms: number | null;
+  vulnerabilities_found: number;
+};
+
+type RawScanResponse = RawScanRecord;
+
+type JsonReport = {
+  scan_id: number;
+  generated_at: string;
+  findings: Array<{
+    id: number;
+    title: string;
+    severity: string;
+    status: string;
+    owasp: string;
+    cwe: string;
+    dedupe_key: string;
+  }>;
+};
+
+type SarifReport = {
+  scan_id: number;
+  sarif: Record<string, unknown>;
 };
 
 export async function fetchVulnerabilities(): Promise<Vulnerability[]> {
@@ -43,16 +74,28 @@ export async function fetchScanTrends(days = 14): Promise<ScanTrendPoint[]> {
   return response.points;
 }
 
+export async function fetchScans(limit = 30): Promise<ScanRecord[]> {
+  const scans = await getJson<RawScanRecord[]>(`/scanning?limit=${limit}&offset=0&sort_dir=desc`);
+  return scans.map(mapScanRecord);
+}
+
+export async function runScanNow(
+  target: string,
+  payload: string,
+  profile: ScanRecord['profile'],
+): Promise<ScanRecord> {
+  const scan = await postJsonRequest<RawScanResponse, { target: string; payload: string; profile: ScanRecord['profile'] }>(
+    '/scanning/run',
+    { target, payload, profile },
+  );
+  return mapScanRecord(scan);
+}
+
 export async function queueScan(target: string, payload: string): Promise<ScanJob> {
-  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'}/scanning/queue`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ target, payload, profile: 'standard' }),
-  });
-  if (!response.ok) {
-    throw new Error(`Queue scan failed (${response.status})`);
-  }
-  const job = (await response.json()) as RawScanJob;
+  const job = await postJsonRequest<RawScanJob, { target: string; payload: string; profile: string }>(
+    '/scanning/queue',
+    { target, payload, profile: 'standard' },
+  );
   return mapJob(job);
 }
 
@@ -67,22 +110,14 @@ export async function getFindingTimeline(vulnId: string): Promise<FindingTimelin
 }
 
 export async function addFindingComment(vulnId: string, body: string): Promise<void> {
-  await postJson(`/vulnerabilities/${vulnId}/comments`, { body });
+  await postJsonRequest<Record<string, never>, { body: string }>(`/vulnerabilities/${vulnId}/comments`, { body });
 }
 
 export async function acceptRisk(vulnId: string, reason: string): Promise<void> {
-  await postJson(`/vulnerabilities/${vulnId}/risk-acceptance`, { reason });
-}
-
-async function postJson(path: string, body: unknown): Promise<void> {
-  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
-  }
+  await postJsonRequest<Record<string, never>, { reason: string }>(
+    `/vulnerabilities/${vulnId}/risk-acceptance`,
+    { reason },
+  );
 }
 
 function mapJob(job: RawScanJob): ScanJob {
@@ -93,7 +128,42 @@ function mapJob(job: RawScanJob): ScanJob {
     findings: 0,
     startedAt: job.started_at ?? job.created_at,
     duration: job.completed_at ? 'done' : 'pending',
+    scanId: job.scan_id ? String(job.scan_id) : undefined,
   };
+}
+
+export async function downloadScanJsonReport(scanId: string): Promise<void> {
+  const report = await getJson<JsonReport>(`/scanning/${scanId}/reports/json`);
+  downloadFile(`scan-${scanId}-report.json`, JSON.stringify(report, null, 2));
+}
+
+export async function downloadScanSarifReport(scanId: string): Promise<void> {
+  const report = await getJson<SarifReport>(`/scanning/${scanId}/reports/sarif`);
+  downloadFile(`scan-${scanId}-report.sarif.json`, JSON.stringify(report.sarif, null, 2));
+}
+
+function mapScanRecord(scan: RawScanRecord): ScanRecord {
+  return {
+    id: String(scan.id),
+    target: scan.target,
+    profile: scan.profile,
+    status: scan.status,
+    findings: scan.vulnerabilities_found,
+    createdAt: scan.created_at,
+    durationMs: scan.duration_ms,
+  };
+}
+
+function downloadFile(filename: string, content: string): void {
+  const blob = new Blob([content], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function severityToCvss(severity: Vulnerability['severity']): number {

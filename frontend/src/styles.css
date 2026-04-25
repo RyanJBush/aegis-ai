@@ -46,6 +46,10 @@ p {
   margin-bottom: 1.5rem;
 }
 
+.logout-button {
+  margin-top: 0.9rem;
+}
+
 .nav-link {
   display: block;
   color: #c5d6ec;
@@ -197,6 +201,7 @@ p {
 
 input,
 textarea,
+select,
 button {
   border-radius: 8px;
   border: 1px solid #294061;
@@ -248,4 +253,12 @@ button {
 
 .muted {
   color: #9ab3d0;
+}
+
+.report-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
 }
