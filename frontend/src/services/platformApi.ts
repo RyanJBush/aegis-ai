@@ -1,4 +1,4 @@
-import { getJson, postJson as postJsonRequest } from './api';
+import { getJson } from './api';
 import { FindingTimelineEvent, ScanJob, ScanTrendPoint, Vulnerability } from '../types';
 
 type RawVuln = {
@@ -44,10 +44,15 @@ export async function fetchScanTrends(days = 14): Promise<ScanTrendPoint[]> {
 }
 
 export async function queueScan(target: string, payload: string): Promise<ScanJob> {
-  const job = await postJsonRequest<RawScanJob, { target: string; payload: string; profile: string }>(
-    '/scanning/queue',
-    { target, payload, profile: 'standard' },
-  );
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'}/scanning/queue`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target, payload, profile: 'standard' }),
+  });
+  if (!response.ok) {
+    throw new Error(`Queue scan failed (${response.status})`);
+  }
+  const job = (await response.json()) as RawScanJob;
   return mapJob(job);
 }
 
@@ -62,14 +67,22 @@ export async function getFindingTimeline(vulnId: string): Promise<FindingTimelin
 }
 
 export async function addFindingComment(vulnId: string, body: string): Promise<void> {
-  await postJsonRequest<Record<string, never>, { body: string }>(`/vulnerabilities/${vulnId}/comments`, { body });
+  await postJson(`/vulnerabilities/${vulnId}/comments`, { body });
 }
 
 export async function acceptRisk(vulnId: string, reason: string): Promise<void> {
-  await postJsonRequest<Record<string, never>, { reason: string }>(
-    `/vulnerabilities/${vulnId}/risk-acceptance`,
-    { reason },
-  );
+  await postJson(`/vulnerabilities/${vulnId}/risk-acceptance`, { reason });
+}
+
+async function postJson(path: string, body: unknown): Promise<void> {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}`);
+  }
 }
 
 function mapJob(job: RawScanJob): ScanJob {
