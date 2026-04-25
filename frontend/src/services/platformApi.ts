@@ -1,5 +1,6 @@
 import { getJson, postJson as postJsonRequest } from './api';
 import { FindingTimelineEvent, ScanJob, ScanRecord, ScanTrendPoint, Vulnerability } from '../types';
+import { FindingTimelineEvent, ScanJob, ScanTrendPoint, Vulnerability } from '../types';
 
 type RawVuln = {
   id: number;
