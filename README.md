@@ -58,6 +58,15 @@ npm install
 npm run dev
 ```
 
+### 4) Authenticate before using protected UI routes
+Most UI pages call protected API endpoints. Register and login from the API first, then sign in from `/login` in the web UI.
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"analyst@example.com","password":"StrongPassw0rd!","role":"security_analyst"}'
+```
+
 ## Example API Flow
 ```bash
 # Register analyst
@@ -89,3 +98,6 @@ curl -X POST http://localhost:8000/api/v1/scanning/run \
 - App Interface (`/app-interface`): payload input UI for scan execution workflow.
 - Scan Results (`/scan-results`): historical scan statuses and detected findings.
 - Vulnerability Detail (`/vulnerabilities/:id`): deep technical breakdown and remediation guidance.
+
+## Notes
+- The frontend TypeScript app is the supported runtime entrypoint (`src/main.tsx`).
