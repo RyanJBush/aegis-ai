@@ -1,4 +1,5 @@
 import { getJson, postJson as postJsonRequest } from './api';
+import { FindingTimelineEvent, ScanJob, ScanRecord, ScanTrendPoint, Vulnerability } from '../types';
 import { FindingTimelineEvent, ScanJob, ScanTrendPoint, Vulnerability } from '../types';
 
 type RawVuln = {
@@ -21,6 +22,37 @@ type RawScanJob = {
   completed_at?: string | null;
 };
 
+type RawScanRecord = {
+  id: number;
+  target: string;
+  profile: ScanRecord['profile'];
+  status: ScanRecord['status'];
+  created_at: string;
+  duration_ms: number | null;
+  vulnerabilities_found: number;
+};
+
+type RawScanResponse = RawScanRecord;
+
+type JsonReport = {
+  scan_id: number;
+  generated_at: string;
+  findings: Array<{
+    id: number;
+    title: string;
+    severity: string;
+    status: string;
+    owasp: string;
+    cwe: string;
+    dedupe_key: string;
+  }>;
+};
+
+type SarifReport = {
+  scan_id: number;
+  sarif: Record<string, unknown>;
+};
+
 export async function fetchVulnerabilities(): Promise<Vulnerability[]> {
   const vulns = await getJson<RawVuln[]>('/vulnerabilities');
   return vulns.map((v) => ({
@@ -41,6 +73,23 @@ export async function fetchVulnerabilities(): Promise<Vulnerability[]> {
 export async function fetchScanTrends(days = 14): Promise<ScanTrendPoint[]> {
   const response = await getJson<{ points: ScanTrendPoint[] }>(`/scanning/history/trends?days=${days}`);
   return response.points;
+}
+
+export async function fetchScans(limit = 30): Promise<ScanRecord[]> {
+  const scans = await getJson<RawScanRecord[]>(`/scanning?limit=${limit}&offset=0&sort_dir=desc`);
+  return scans.map(mapScanRecord);
+}
+
+export async function runScanNow(
+  target: string,
+  payload: string,
+  profile: ScanRecord['profile'],
+): Promise<ScanRecord> {
+  const scan = await postJsonRequest<RawScanResponse, { target: string; payload: string; profile: ScanRecord['profile'] }>(
+    '/scanning/run',
+    { target, payload, profile },
+  );
+  return mapScanRecord(scan);
 }
 
 export async function queueScan(target: string, payload: string): Promise<ScanJob> {
@@ -80,7 +129,42 @@ function mapJob(job: RawScanJob): ScanJob {
     findings: 0,
     startedAt: job.started_at ?? job.created_at,
     duration: job.completed_at ? 'done' : 'pending',
+    scanId: job.scan_id ? String(job.scan_id) : undefined,
   };
+}
+
+export async function downloadScanJsonReport(scanId: string): Promise<void> {
+  const report = await getJson<JsonReport>(`/scanning/${scanId}/reports/json`);
+  downloadFile(`scan-${scanId}-report.json`, JSON.stringify(report, null, 2));
+}
+
+export async function downloadScanSarifReport(scanId: string): Promise<void> {
+  const report = await getJson<SarifReport>(`/scanning/${scanId}/reports/sarif`);
+  downloadFile(`scan-${scanId}-report.sarif.json`, JSON.stringify(report.sarif, null, 2));
+}
+
+function mapScanRecord(scan: RawScanRecord): ScanRecord {
+  return {
+    id: String(scan.id),
+    target: scan.target,
+    profile: scan.profile,
+    status: scan.status,
+    findings: scan.vulnerabilities_found,
+    createdAt: scan.created_at,
+    durationMs: scan.duration_ms,
+  };
+}
+
+function downloadFile(filename: string, content: string): void {
+  const blob = new Blob([content], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function severityToCvss(severity: Vulnerability['severity']): number {

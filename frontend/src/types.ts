@@ -21,6 +21,17 @@ export type ScanJob = {
   findings: number;
   startedAt: string;
   duration: string;
+  scanId?: string;
+};
+
+export type ScanRecord = {
+  id: string;
+  target: string;
+  profile: 'quick' | 'standard' | 'deep';
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'reviewed';
+  findings: number;
+  createdAt: string;
+  durationMs: number | null;
 };
 
 export type ScanTrendPoint = {
