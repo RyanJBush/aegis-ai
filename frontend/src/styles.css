@@ -46,6 +46,10 @@ p {
   margin-bottom: 1.5rem;
 }
 
+.logout-button {
+  margin-top: 0.9rem;
+}
+
 .nav-link {
   display: block;
   color: #c5d6ec;

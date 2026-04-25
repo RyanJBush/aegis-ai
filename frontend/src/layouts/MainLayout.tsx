@@ -1,4 +1,6 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+
+import { clearAuthToken } from '../services/api';
 
 const navItems = [
   { path: '/', label: 'Dashboard' },
@@ -10,6 +12,12 @@ const navItems = [
 
 function MainLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    clearAuthToken();
+    navigate('/login', { replace: true });
+  }
 
   return (
     <div className="app-shell">
@@ -27,6 +35,9 @@ function MainLayout() {
             </Link>
           ))}
         </nav>
+        <button className="logout-button" type="button" onClick={handleLogout}>
+          Log out
+        </button>
       </aside>
       <main className="content">
         <Outlet />
