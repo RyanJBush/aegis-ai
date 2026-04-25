@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
 import AppInterfacePage from './pages/AppInterfacePage';
 import DashboardPage from './pages/DashboardPage';
@@ -14,14 +13,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
+      <Route path="/" element={<MainLayout />}>
         <Route index element={<DashboardPage />} />
         <Route path="app-interface" element={<AppInterfacePage />} />
         <Route path="scan-results" element={<ScanResultsPage />} />

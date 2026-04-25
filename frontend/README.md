@@ -1,24 +1,16 @@
-# Aegis AI Frontend
+# React + Vite
 
-React + TypeScript + Vite dashboard for Aegis AI.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Local development
+Currently, two official plugins are available:
 
-```bash
-npm install
-npm run dev
-```
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-The app expects the backend API at `VITE_API_BASE_URL` (default: `http://localhost:8000/api/v1`).
+## React Compiler
 
-## Auth flow
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-- Visit `/login`.
-- Use credentials for a registered user (recommended role: `security_analyst` or `admin` for scan actions).
-- The access token is stored in local storage and attached as a bearer token for API requests.
+## Expanding the ESLint configuration
 
-## Build
-
-```bash
-npm run build
-```
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.

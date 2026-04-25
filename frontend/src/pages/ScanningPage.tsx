@@ -5,7 +5,7 @@ import { getJob, queueScan } from '../services/platformApi';
 import { ScanJob } from '../types';
 
 function ScanningPage() {
-  const [target, setTarget] = useState('https://example.com');
+  const [target, setTarget] = useState('https://example.internal');
   const [payload, setPayload] = useState("' OR 1=1 -- <script>alert(1)</script>");
   const [job, setJob] = useState<ScanJob | null>(null);
   const [error, setError] = useState<string | null>(null);
