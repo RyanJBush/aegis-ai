@@ -262,3 +262,16 @@ button {
   flex-wrap: wrap;
   margin-top: 0.8rem;
 }
+
+.evidence-block {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #2b4060;
+  background: rgba(6, 15, 29, 0.75);
+  color: #c8dbf4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.83rem;
+}

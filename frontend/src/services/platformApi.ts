@@ -1,15 +1,25 @@
+import { getJson, patchJson as patchJsonRequest, postJson as postJsonRequest } from './api';
+import { FindingTimelineEvent, KpiSummary, ScanJob, ScanRecord, ScanTrendPoint, Vulnerability } from '../types';
 import { getJson, postJson as postJsonRequest } from './api';
 import { FindingTimelineEvent, ScanJob, ScanRecord, ScanTrendPoint, Vulnerability } from '../types';
 import { FindingTimelineEvent, ScanJob, ScanTrendPoint, Vulnerability } from '../types';
 
 type RawVuln = {
   id: number;
+  scan_id: number;
   title: string;
   severity: Vulnerability['severity'];
   status: Vulnerability['status'];
   rule_key: string;
   owasp_category: string;
+  confidence: number;
+  reason_code: string;
+  cwe_id: string;
+  evidence: string;
   remediation: string;
+  secure_example?: string | null;
+  assigned_owner?: string | null;
+  notes?: string | null;
   created_at: string;
 };
 
@@ -55,24 +65,21 @@ type SarifReport = {
 
 export async function fetchVulnerabilities(): Promise<Vulnerability[]> {
   const vulns = await getJson<RawVuln[]>('/vulnerabilities');
-  return vulns.map((v) => ({
-    id: String(v.id),
-    title: v.title,
-    severity: v.severity,
-    status: v.status,
-    cvss: severityToCvss(v.severity),
-    endpoint: v.owasp_category,
-    rule: v.rule_key,
-    explanation: `${v.rule_key} matched scanner heuristics.`,
-    impact: `Potential exploitation risk tied to ${v.owasp_category}.`,
-    remediation: v.remediation,
-    observedAt: v.created_at,
-  }));
+  return vulns.map(mapRawVulnerability);
+}
+
+export async function fetchVulnerabilityById(vulnId: string): Promise<Vulnerability> {
+  const vuln = await getJson<RawVuln>(`/vulnerabilities/${vulnId}`);
+  return mapRawVulnerability(vuln);
 }
 
 export async function fetchScanTrends(days = 14): Promise<ScanTrendPoint[]> {
   const response = await getJson<{ points: ScanTrendPoint[] }>(`/scanning/history/trends?days=${days}`);
   return response.points;
+}
+
+export async function fetchKpiSummary(): Promise<KpiSummary> {
+  return getJson<KpiSummary>('/scanning/kpi/summary');
 }
 
 export async function fetchScans(limit = 30): Promise<ScanRecord[]> {
@@ -114,11 +121,46 @@ export async function addFindingComment(vulnId: string, body: string): Promise<v
   await postJsonRequest<Record<string, never>, { body: string }>(`/vulnerabilities/${vulnId}/comments`, { body });
 }
 
+export async function updateFindingWorkflow(
+  vulnId: string,
+  payload: { status: Vulnerability['status']; assigned_owner?: string | null; notes?: string | null },
+): Promise<Vulnerability> {
+  const vuln = await patchJsonRequest<RawVuln, { status: Vulnerability['status']; assigned_owner?: string | null; notes?: string | null }>(
+    `/vulnerabilities/${vulnId}/workflow`,
+    payload,
+  );
+  return mapRawVulnerability(vuln);
+}
+
 export async function acceptRisk(vulnId: string, reason: string): Promise<void> {
   await postJsonRequest<Record<string, never>, { reason: string }>(
     `/vulnerabilities/${vulnId}/risk-acceptance`,
     { reason },
   );
+}
+
+function mapRawVulnerability(vuln: RawVuln): Vulnerability {
+  return {
+    id: String(vuln.id),
+    scanId: String(vuln.scan_id),
+    title: vuln.title,
+    severity: vuln.severity,
+    status: vuln.status,
+    cvss: severityToCvss(vuln.severity),
+    endpoint: vuln.owasp_category,
+    rule: vuln.rule_key,
+    explanation: `${vuln.rule_key} matched scanner heuristics with ${Math.round(vuln.confidence * 100)}% confidence.`,
+    impact: `Potential exploitation risk tied to ${vuln.owasp_category}.`,
+    remediation: vuln.remediation,
+    confidence: vuln.confidence,
+    reasonCode: vuln.reason_code,
+    cweId: vuln.cwe_id,
+    evidence: vuln.evidence,
+    secureExample: vuln.secure_example ?? undefined,
+    assignedOwner: vuln.assigned_owner ?? null,
+    notes: vuln.notes ?? null,
+    observedAt: vuln.created_at,
+  };
 }
 
 function mapJob(job: RawScanJob): ScanJob {
@@ -130,6 +172,31 @@ function mapJob(job: RawScanJob): ScanJob {
     startedAt: job.started_at ?? job.created_at,
     duration: job.completed_at ? 'done' : 'pending',
     scanId: job.scan_id ? String(job.scan_id) : undefined,
+  };
+}
+
+export async function downloadScanJsonReport(scanId: string): Promise<void> {
+  const report = await getJson<JsonReport>(`/scanning/${scanId}/reports/json`);
+  downloadFile(`scan-${scanId}-report.json`, JSON.stringify(report, null, 2));
+}
+
+export async function downloadScanSarifReport(scanId: string): Promise<void> {
+  const report = await getJson<SarifReport>(`/scanning/${scanId}/reports/sarif`);
+  downloadFile(`scan-${scanId}-report.sarif.json`, JSON.stringify(report.sarif, null, 2));
+}
+
+function mapScanRecord(scan: RawScanRecord): ScanRecord {
+  return {
+    id: String(scan.id),
+    target: scan.target,
+    profile: scan.profile,
+    status: scan.status,
+    findings: scan.vulnerabilities_found,
+    createdAt: scan.created_at,
+    durationMs: scan.duration_ms,
+  };
+}
+
   };
 }
 
