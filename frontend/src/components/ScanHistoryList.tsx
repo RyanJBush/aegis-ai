@@ -2,9 +2,10 @@ import { ScanJob } from '../types';
 
 type ScanHistoryListProps = {
   scans: ScanJob[];
+  onSelectScan?: (scanId: string) => void;
 };
 
-function ScanHistoryList({ scans }: ScanHistoryListProps) {
+function ScanHistoryList({ scans, onSelectScan }: ScanHistoryListProps) {
   return (
     <ul className="scan-history">
       {scans.map((scan) => (
@@ -18,6 +19,11 @@ function ScanHistoryList({ scans }: ScanHistoryListProps) {
             <p>
               {scan.findings} findings • {scan.duration}
             </p>
+            {scan.scanId && onSelectScan && (
+              <button type="button" onClick={() => onSelectScan(scan.scanId ?? scan.id)}>
+                Open reports
+              </button>
+            )}
           </div>
         </li>
       ))}
