@@ -101,3 +101,20 @@ curl -X POST http://localhost:8000/api/v1/scanning/run \
 
 ## Notes
 - The frontend TypeScript app is the supported runtime entrypoint (`src/main.tsx`).
+
+## Quality Gates (Phase 5)
+
+```bash
+# run lint + tests/build checks similar to CI
+make ci-check
+```
+
+## Demo Readiness
+
+- Demo runbook: `docs/demo-runbook.md`
+- Recommended walkthrough order:
+  1. Dashboard
+  2. Scan Ops
+  3. Scan Results (JSON/SARIF exports + remediation checklist)
+  4. Vulnerability Detail workflow
+  5. Governance (audit logs + rule history)
