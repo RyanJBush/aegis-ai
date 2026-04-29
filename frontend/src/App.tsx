@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage';
 import RemediationQueuePage from './pages/RemediationQueuePage';
 import ScanResultsPage from './pages/ScanResultsPage';
 import ScanningPage from './pages/ScanningPage';
+import GovernancePage from './pages/GovernancePage';
 import VulnerabilityDetailPage from './pages/VulnerabilityDetailPage';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
         <Route path="scan-results" element={<ScanResultsPage />} />
         <Route path="scanning" element={<ScanningPage />} />
         <Route path="remediation" element={<RemediationQueuePage />} />
+        <Route path="governance" element={<GovernancePage />} />
         <Route path="vulnerabilities/:id" element={<VulnerabilityDetailPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -63,3 +63,22 @@ export type KpiSummary = {
   scan_coverage_percent: number;
   average_scan_time_ms: number;
 };
+
+export type AuditLogEntry = {
+  id: number;
+  action: string;
+  entity_type: string;
+  entity_id?: number | null;
+  actor_user_id?: number | null;
+  created_at: string;
+  details?: Record<string, unknown> | null;
+};
+
+export type RuleChangeEntry = {
+  id: number;
+  rule_key: string;
+  change_type: string;
+  reason?: string | null;
+  actor_user_id: number;
+  created_at: string;
+};

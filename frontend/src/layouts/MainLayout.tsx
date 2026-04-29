@@ -7,6 +7,7 @@ const navItems = [
   { path: '/scan-results', label: 'Scan Results' },
   { path: '/scanning', label: 'Scan Ops' },
   { path: '/remediation', label: 'Remediation Queue' },
+  { path: '/governance', label: 'Governance' },
   { path: '/app-interface', label: 'App Interface' },
 ];
 

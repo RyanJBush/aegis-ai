@@ -1,4 +1,14 @@
 import { getJson, patchJson as patchJsonRequest, postJson as postJsonRequest } from './api';
+import {
+  AuditLogEntry,
+  FindingTimelineEvent,
+  KpiSummary,
+  RuleChangeEntry,
+  ScanJob,
+  ScanRecord,
+  ScanTrendPoint,
+  Vulnerability,
+} from '../types';
 import { FindingTimelineEvent, KpiSummary, ScanJob, ScanRecord, ScanTrendPoint, Vulnerability } from '../types';
 import { getJson, postJson as postJsonRequest } from './api';
 import { FindingTimelineEvent, ScanJob, ScanRecord, ScanTrendPoint, Vulnerability } from '../types';
@@ -61,6 +71,16 @@ type JsonReport = {
 type SarifReport = {
   scan_id: number;
   sarif: Record<string, unknown>;
+};
+
+type RemediationChecklistResponse = {
+  scan_id: number;
+  checklist: string[];
+};
+
+type SuppressionExport = {
+  scan_id: number;
+  suppression_keys: string[];
 };
 
 export async function fetchVulnerabilities(): Promise<Vulnerability[]> {
@@ -185,6 +205,24 @@ export async function downloadScanSarifReport(scanId: string): Promise<void> {
   downloadFile(`scan-${scanId}-report.sarif.json`, JSON.stringify(report.sarif, null, 2));
 }
 
+export async function fetchRemediationChecklist(scanId: string): Promise<string[]> {
+  const response = await getJson<RemediationChecklistResponse>(`/scanning/${scanId}/remediation-checklist`);
+  return response.checklist;
+}
+
+export async function fetchSuppressions(scanId: string): Promise<string[]> {
+  const response = await getJson<SuppressionExport>(`/scanning/${scanId}/suppressions`);
+  return response.suppression_keys;
+}
+
+export async function fetchAuditLogs(limit = 25): Promise<AuditLogEntry[]> {
+  return getJson<AuditLogEntry[]>(`/observability/audit-logs?limit=${limit}&offset=0`);
+}
+
+export async function fetchRuleHistory(limit = 25): Promise<RuleChangeEntry[]> {
+  return getJson<RuleChangeEntry[]>(`/observability/rule-history?limit=${limit}&offset=0`);
+}
+
 function mapScanRecord(scan: RawScanRecord): ScanRecord {
   return {
     id: String(scan.id),
@@ -194,6 +232,9 @@ function mapScanRecord(scan: RawScanRecord): ScanRecord {
     findings: scan.vulnerabilities_found,
     createdAt: scan.created_at,
     durationMs: scan.duration_ms,
+  };
+}
+
   };
 }
 
