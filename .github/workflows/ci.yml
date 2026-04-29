@@ -21,7 +21,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
-          pip install pytest
+          pip install ruff
+
+      - name: Lint backend
+        run: cd backend && python -m compileall app
 
       - name: Run backend tests
         run: cd backend && pytest
@@ -41,6 +44,9 @@ jobs:
 
       - name: Install frontend dependencies
         run: cd frontend && npm install
+
+      - name: Lint frontend
+        run: cd frontend && npm run lint
 
       - name: Build frontend
         run: cd frontend && npm run build
