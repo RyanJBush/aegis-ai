@@ -12,6 +12,7 @@ import {
   fetchSuppressions,
   fetchVulnerabilities,
 } from '../services/platformApi';
+import { downloadScanJsonReport, downloadScanSarifReport, fetchScans, fetchVulnerabilities } from '../services/platformApi';
 import { ScanJob, Vulnerability } from '../types';
 
 function ScanResultsPage() {

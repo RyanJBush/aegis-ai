@@ -7,6 +7,8 @@ import VulnerabilityTable from '../components/VulnerabilityTable';
 import { scanHistory, vulnerabilities as fallbackVulnerabilities } from '../services/mockData';
 import { fetchKpiSummary, fetchScans, fetchVulnerabilities } from '../services/platformApi';
 import { KpiSummary, ScanJob, Vulnerability } from '../types';
+import { fetchScans, fetchVulnerabilities } from '../services/platformApi';
+import { ScanJob, Vulnerability } from '../types';
 
 function DashboardPage() {
   const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>(fallbackVulnerabilities);
@@ -19,6 +21,7 @@ function DashboardPage() {
     async function load() {
       try {
         const [vulns, scans, summary] = await Promise.all([fetchVulnerabilities(), fetchScans(8), fetchKpiSummary()]);
+        const [vulns, scans] = await Promise.all([fetchVulnerabilities(), fetchScans(8)]);
         if (active) {
           setVulnerabilities(vulns);
           setKpi(summary);

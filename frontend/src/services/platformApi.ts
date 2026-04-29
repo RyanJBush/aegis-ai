@@ -9,6 +9,10 @@ import {
   ScanTrendPoint,
   Vulnerability,
 } from '../types';
+import { FindingTimelineEvent, KpiSummary, ScanJob, ScanRecord, ScanTrendPoint, Vulnerability } from '../types';
+import { getJson, postJson as postJsonRequest } from './api';
+import { FindingTimelineEvent, ScanJob, ScanRecord, ScanTrendPoint, Vulnerability } from '../types';
+import { FindingTimelineEvent, ScanJob, ScanTrendPoint, Vulnerability } from '../types';
 
 type RawVuln = {
   id: number;
@@ -217,6 +221,77 @@ export async function fetchAuditLogs(limit = 25): Promise<AuditLogEntry[]> {
 
 export async function fetchRuleHistory(limit = 25): Promise<RuleChangeEntry[]> {
   return getJson<RuleChangeEntry[]>(`/observability/rule-history?limit=${limit}&offset=0`);
+}
+
+function mapScanRecord(scan: RawScanRecord): ScanRecord {
+  return {
+    id: String(scan.id),
+    target: scan.target,
+    profile: scan.profile,
+    status: scan.status,
+    findings: scan.vulnerabilities_found,
+    createdAt: scan.created_at,
+    durationMs: scan.duration_ms,
+  };
+}
+
+  };
+}
+
+export async function downloadScanJsonReport(scanId: string): Promise<void> {
+  const report = await getJson<JsonReport>(`/scanning/${scanId}/reports/json`);
+  downloadFile(`scan-${scanId}-report.json`, JSON.stringify(report, null, 2));
+}
+
+export async function downloadScanSarifReport(scanId: string): Promise<void> {
+  const report = await getJson<SarifReport>(`/scanning/${scanId}/reports/sarif`);
+  downloadFile(`scan-${scanId}-report.sarif.json`, JSON.stringify(report.sarif, null, 2));
+}
+
+export async function fetchRemediationChecklist(scanId: string): Promise<string[]> {
+  const response = await getJson<RemediationChecklistResponse>(`/scanning/${scanId}/remediation-checklist`);
+  return response.checklist;
+}
+
+export async function fetchSuppressions(scanId: string): Promise<string[]> {
+  const response = await getJson<SuppressionExport>(`/scanning/${scanId}/suppressions`);
+  return response.suppression_keys;
+}
+
+export async function fetchAuditLogs(limit = 25): Promise<AuditLogEntry[]> {
+  return getJson<AuditLogEntry[]>(`/observability/audit-logs?limit=${limit}&offset=0`);
+}
+
+export async function fetchRuleHistory(limit = 25): Promise<RuleChangeEntry[]> {
+  return getJson<RuleChangeEntry[]>(`/observability/rule-history?limit=${limit}&offset=0`);
+}
+
+function mapScanRecord(scan: RawScanRecord): ScanRecord {
+  return {
+    id: String(scan.id),
+    target: scan.target,
+    profile: scan.profile,
+    status: scan.status,
+    findings: scan.vulnerabilities_found,
+    createdAt: scan.created_at,
+    durationMs: scan.duration_ms,
+  };
+}
+
+  };
+}
+
+  };
+}
+
+export async function downloadScanJsonReport(scanId: string): Promise<void> {
+  const report = await getJson<JsonReport>(`/scanning/${scanId}/reports/json`);
+  downloadFile(`scan-${scanId}-report.json`, JSON.stringify(report, null, 2));
+}
+
+export async function downloadScanSarifReport(scanId: string): Promise<void> {
+  const report = await getJson<SarifReport>(`/scanning/${scanId}/reports/sarif`);
+  downloadFile(`scan-${scanId}-report.sarif.json`, JSON.stringify(report.sarif, null, 2));
 }
 
 function mapScanRecord(scan: RawScanRecord): ScanRecord {
