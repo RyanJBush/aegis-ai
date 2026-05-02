@@ -14,6 +14,8 @@ class RuleFinding:
     owasp_category: str
     cwe_id: str
     evidence: str
+    description: str
+    affected_endpoint: str
     remediation: str
     secure_example: str
     dedupe_key: str
@@ -23,6 +25,7 @@ class RuleFinding:
 class ScannerRule:
     key: str
     title: str
+    description: str
     severity: str
     confidence: float
     reason_code: str
@@ -50,6 +53,47 @@ def _regex_matches(payload: str, patterns: list[str]) -> list[str]:
         for pattern in patterns
         for match in re.finditer(pattern, payload)
     ]
+
+
+def _detect_insecure_headers(payload: str) -> list[str]:
+    normalized = "\n".join(line.strip() for line in payload.splitlines())
+    if not re.search(r"(?im)^http/\d(?:\.\d)?\s+\d{3}", normalized):
+        return []
+    findings: list[str] = []
+    header_patterns = {
+        "missing_content_security_policy": r"(?im)^content-security-policy\s*:",
+        "missing_x_content_type_options": r"(?im)^x-content-type-options\s*:\s*nosniff\s*$",
+        "missing_x_frame_options": r"(?im)^x-frame-options\s*:",
+        "missing_strict_transport_security": r"(?im)^strict-transport-security\s*:",
+    }
+    for label, pattern in header_patterns.items():
+        if not re.search(pattern, normalized):
+            findings.append(f"{label}")
+
+    findings.extend(_regex_matches(normalized, [r"(?im)^access-control-allow-origin\s*:\s*\*\s*$"]))
+    return findings
+
+
+def _detect_auth_misconfiguration(payload: str) -> list[str]:
+    normalized = "\n".join(line.strip() for line in payload.splitlines())
+    if not re.search(r"(?im)^authorization\s*:", normalized) and "auth_required" not in normalized.lower():
+        return []
+    return _regex_matches(
+        normalized,
+        [
+            r"(?im)^authorization\s*:\s*basic\s+[A-Za-z0-9+/=]+",
+            r"(?i)password\s*[:=]\s*['\"]?(admin|password|123456)['\"]?",
+            r"(?i)auth_required\s*[:=]\s*false",
+        ],
+    )
+
+
+def _infer_endpoint(payload: str) -> str:
+    match = re.search(r"\b(GET|POST|PUT|PATCH|DELETE)\s+(/[^\s?#]+)", payload, re.IGNORECASE)
+    if match:
+        return match.group(2)
+    path_match = re.search(r"\b(?:path|endpoint)\s*[:=]\s*['\"]?(/[^\s'\"?#]+)", payload, re.IGNORECASE)
+    return path_match.group(1) if path_match else "unknown"
 
 
 def _detect_sqli(payload: str) -> list[str]:
@@ -135,6 +179,8 @@ class ScannerRegistry:
                         owasp_category=rule.owasp_category,
                         cwe_id=rule.cwe_id,
                         evidence=evidence,
+                        description=rule.description,
+                        affected_endpoint=_infer_endpoint(payload),
                         remediation=rule.remediation,
                         secure_example=rule.secure_example,
                         dedupe_key=_dedupe_key(rule.key, evidence),
@@ -149,6 +195,7 @@ def build_default_registry() -> ScannerRegistry:
         ScannerRule(
             key="SQLI",
             title="Potential SQL Injection pattern",
+            description="Input contains SQL syntax patterns commonly used to alter query logic.",
             severity="high",
             confidence=0.9,
             reason_code="SQLI_PATTERN_MATCH",
@@ -164,6 +211,7 @@ def build_default_registry() -> ScannerRegistry:
         ScannerRule(
             key="XSS",
             title="Potential Cross-Site Scripting pattern",
+            description="Input contains script execution patterns that may trigger client-side code execution.",
             severity="medium",
             confidence=0.85,
             reason_code="XSS_PATTERN_MATCH",
@@ -179,6 +227,7 @@ def build_default_registry() -> ScannerRegistry:
         ScannerRule(
             key="INSECURE_AUTH",
             title="Insecure authentication crypto or secret pattern",
+            description="Detected weak authentication configuration or hardcoded authentication secret usage.",
             severity="high",
             confidence=0.8,
             reason_code="INSECURE_AUTH_PATTERN",
@@ -194,6 +243,7 @@ def build_default_registry() -> ScannerRegistry:
         ScannerRule(
             key="BROKEN_ACCESS_CONTROL",
             title="Potential broken access control indicator",
+            description="Detected permissive authorization flags that may bypass access checks.",
             severity="high",
             confidence=0.75,
             reason_code="ACCESS_CONTROL_WEAKNESS_PATTERN",
@@ -209,6 +259,7 @@ def build_default_registry() -> ScannerRegistry:
         ScannerRule(
             key="INSECURE_CONFIG",
             title="Insecure configuration indicator",
+            description="Detected configuration values frequently associated with unsafe production defaults.",
             severity="medium",
             confidence=0.7,
             reason_code="INSECURE_CONFIGURATION_PATTERN",
@@ -224,6 +275,7 @@ def build_default_registry() -> ScannerRegistry:
         ScannerRule(
             key="SENSITIVE_DATA_EXPOSURE",
             title="Potential sensitive data exposure pattern",
+            description="Detected content that resembles secrets or sensitive credentials.",
             severity="critical",
             confidence=0.78,
             reason_code="SENSITIVE_DATA_PATTERN",
@@ -240,6 +292,7 @@ def build_default_registry() -> ScannerRegistry:
         ScannerRule(
             key="SECRET_DETECTION",
             title="Potential secret token/private key exposure",
+            description="Detected high-risk secret/token/private-key patterns in the scanned payload.",
             severity="critical",
             confidence=0.9,
             reason_code="SECRET_LEAKAGE_PATTERN",
@@ -255,6 +308,7 @@ def build_default_registry() -> ScannerRegistry:
         ScannerRule(
             key="CONFIG_AUDIT",
             title="Configuration hardening issue in deployment/config file",
+            description="Detected deployment or runtime hardening settings that increase attack surface.",
             severity="high",
             confidence=0.82,
             reason_code="CONFIG_AUDIT_PATTERN",
@@ -264,6 +318,38 @@ def build_default_registry() -> ScannerRegistry:
             secure_example="Set runAsNonRoot=true, avoid :latest tags, and keep TLS verification enabled.",
             profile_minimum="standard",
             detector=_detect_config_audit_issues,
+        )
+    )
+    registry.register(
+        ScannerRule(
+            key="INSECURE_HEADERS",
+            title="Missing or insecure HTTP security headers",
+            description="Response headers are missing key security controls or contain permissive values.",
+            severity="medium",
+            confidence=0.8,
+            reason_code="INSECURE_HEADERS_PATTERN",
+            owasp_category="A05:2021-Security Misconfiguration",
+            cwe_id="CWE-693",
+            remediation="Add CSP, HSTS, X-Frame-Options, and X-Content-Type-Options headers with secure values.",
+            secure_example="Set Content-Security-Policy, Strict-Transport-Security, X-Frame-Options: DENY, and X-Content-Type-Options: nosniff.",
+            profile_minimum="quick",
+            detector=_detect_insecure_headers,
+        )
+    )
+    registry.register(
+        ScannerRule(
+            key="AUTH_MISCONFIG",
+            title="Basic auth or authentication misconfiguration indicator",
+            description="Detected patterns indicating weak or misconfigured authentication controls.",
+            severity="high",
+            confidence=0.83,
+            reason_code="AUTH_MISCONFIG_PATTERN",
+            owasp_category="A07:2021-Identification and Authentication Failures",
+            cwe_id="CWE-287",
+            remediation="Disable basic auth for production APIs, enforce strong credentials, and require auth on protected routes.",
+            secure_example="Use token-based auth (OAuth2/JWT) over TLS with MFA/strong password policy and auth_required=true.",
+            profile_minimum="quick",
+            detector=_detect_auth_misconfiguration,
         )
     )
     return registry

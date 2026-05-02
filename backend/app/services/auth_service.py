@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
@@ -39,7 +39,7 @@ class AuthService:
 
         email = payload.email.lower().strip()
         workspace_slug = re.sub(r"[^a-z0-9]+", "-", email.split("@")[0]).strip("-")[:60] or "workspace"
-        workspace = Workspace(name=f"{email} workspace", slug=f"{workspace_slug}-{int(datetime.now(UTC).timestamp())}")
+        workspace = Workspace(name=f"{email} workspace", slug=f"{workspace_slug}-{int(datetime.now(timezone.utc).timestamp())}")
         db.add(workspace)
         db.flush()
 
@@ -67,7 +67,7 @@ class AuthService:
     @staticmethod
     def login(db: Session, payload: LoginRequest) -> TokenPair:
         user = db.query(User).filter(User.email == payload.email.lower().strip()).first()
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
@@ -126,7 +126,7 @@ class AuthService:
         if not db_token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
-        if db_token.expires_at < datetime.now(UTC):
+        if db_token.expires_at < datetime.now(timezone.utc):
             db_token.revoked = True
             db.commit()
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
