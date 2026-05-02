@@ -1,5 +1,5 @@
 import logging
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -55,24 +55,25 @@ class ScanningService:
     @staticmethod
     def process_queued_job(job_id: int, user_id: int, workspace_id: int, payload: ScanRequest) -> None:
         db = SessionLocal()
+        job: ScanJob | None = None
         try:
             job = db.query(ScanJob).filter(ScanJob.id == job_id).first()
             if not job:
                 return
             job.status = "running"
-            job.started_at = datetime.now(UTC)
+            job.started_at = datetime.now(timezone.utc)
             db.commit()
             result = ScanningService.run_scan(db=db, user_id=user_id, workspace_id=workspace_id, payload=payload)
 
             job.scan_id = result.id
             job.status = "completed"
-            job.completed_at = datetime.now(UTC)
+            job.completed_at = datetime.now(timezone.utc)
             db.commit()
         except Exception as exc:
             if job:
                 job.status = "failed"
                 job.failure_reason = str(exc)[:MAX_FAILURE_REASON_LENGTH]
-                job.completed_at = datetime.now(UTC)
+                job.completed_at = datetime.now(timezone.utc)
                 AuditService.log(
                     db,
                     action="scan_job_failed",
@@ -112,7 +113,7 @@ class ScanningService:
         diff_summary = ScanDiffSummary(baseline_scan_id=payload.baseline_scan_id)
         try:
             scan.status = "running"
-            scan.started_at = datetime.now(UTC)
+            scan.started_at = datetime.now(timezone.utc)
             AuditService.log(
                 db,
                 action="scan_started",
@@ -156,7 +157,7 @@ class ScanningService:
             )
 
             scan.status = "completed"
-            scan.completed_at = datetime.now(UTC)
+            scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
                 scan.duration_ms = int((scan.completed_at - scan.started_at).total_seconds() * 1000)
 
@@ -179,7 +180,7 @@ class ScanningService:
             )
         except Exception as exc:
             scan.status = "failed"
-            scan.completed_at = datetime.now(UTC)
+            scan.completed_at = datetime.now(timezone.utc)
             scan.failure_reason = str(exc)[:MAX_FAILURE_REASON_LENGTH]
             if scan.started_at:
                 scan.duration_ms = int((scan.completed_at - scan.started_at).total_seconds() * 1000)
@@ -314,7 +315,7 @@ class ScanningService:
         findings = db.query(Vulnerability).filter(Vulnerability.scan_id == scan_id, Vulnerability.workspace_id == workspace_id).all()
         return ScanReportBundle(
             scan_id=scan_id,
-            generated_at=datetime.now(UTC),
+            generated_at=datetime.now(timezone.utc),
             findings=[
                 {
                     "id": finding.id,

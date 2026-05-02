@@ -1,5 +1,5 @@
 from collections import defaultdict, deque
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, Request, status
 
@@ -12,7 +12,7 @@ class RateLimitService:
     @classmethod
     def check_auth_rate_limit(cls, request: Request) -> None:
         client = request.client.host if request.client else "unknown"
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         window_start = now - timedelta(minutes=1)
         bucket = cls._hits[client]
 

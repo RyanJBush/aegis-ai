@@ -47,3 +47,22 @@ def test_unknown_profile_defaults_to_standard_behavior() -> None:
     assert unknown_profile_keys == standard_keys
     assert "CONFIG_AUDIT" in unknown_profile_keys
     assert "SECRET_DETECTION" not in unknown_profile_keys
+
+
+def test_phase1_rules_detect_insecure_headers_and_auth_misconfiguration() -> None:
+    registry = build_default_registry()
+    payload = """
+    GET /api/admin HTTP/1.1
+    Authorization: Basic YWRtaW46YWRtaW4=
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    auth_required=false
+    """
+
+    findings = registry.run(payload, profile="quick")
+    keys = {f.rule_key for f in findings}
+
+    assert "INSECURE_HEADERS" in keys
+    assert "AUTH_MISCONFIG" in keys
+    assert all(f.description for f in findings)
+    assert all(f.affected_endpoint == "/api/admin" for f in findings)
