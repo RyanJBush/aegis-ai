@@ -78,7 +78,7 @@ def _detect_auth_misconfiguration(payload: str) -> list[str]:
     normalized = "\n".join(line.strip() for line in payload.splitlines())
     if not re.search(r"(?im)^authorization\s*:", normalized) and "auth_required" not in normalized.lower():
         return []
-    return _regex_matches(
+    matches = _regex_matches(
         normalized,
         [
             r"(?im)^authorization\s*:\s*basic\s+[A-Za-z0-9+/=]+",
@@ -86,6 +86,15 @@ def _detect_auth_misconfiguration(payload: str) -> list[str]:
             r"(?i)auth_required\s*[:=]\s*false",
         ],
     )
+    redacted: list[str] = []
+    for match in matches:
+        if re.search(r"(?i)^authorization\s*:\s*basic\s+", match):
+            redacted.append("authorization: basic <redacted>")
+        elif re.search(r"(?i)password\s*[:=]", match):
+            redacted.append("password=<weak-default>")
+        else:
+            redacted.append(match)
+    return redacted
 
 
 def _infer_endpoint(payload: str) -> str:
@@ -97,17 +106,33 @@ def _infer_endpoint(payload: str) -> str:
 
 
 def _detect_sqli(payload: str) -> list[str]:
-    return _regex_matches(
+    matches = _regex_matches(
         payload,
-        [r"(?i)\bUNION\s+SELECT\b", r"(?i)(\bOR\b\s+\d+=\d+|\bOR\b\s+'\w+'='\w+')", r"(?i)--"],
+        [
+            r"(?i)\bUNION\s+SELECT\b",
+            r"(?i)(\bOR\b\s+\d+=\d+|\bOR\b\s+'\w+'='\w+')",
+            r"(?i)\bSLEEP\s*\(\s*\d+\s*\)",
+            r"(?i)\bWAITFOR\s+DELAY\b",
+            r"(?i)(;\s*DROP\s+TABLE\b|;\s*DELETE\s+FROM\b)",
+            r"(?i)--",
+        ],
     )
+    return [m.replace("\n", " ") for m in matches]
 
 
 def _detect_xss(payload: str) -> list[str]:
-    return _regex_matches(
+    matches = _regex_matches(
         payload,
-        [r"(?i)<script\b[^>]*>.*?</script>", r"(?i)onerror\s*=\s*['\"].*?['\"]", r"(?i)javascript:\s*"],
+        [
+            r"(?i)<script\b[^>]*>.*?</script>",
+            r"(?i)onerror\s*=\s*['\"].*?['\"]",
+            r"(?i)onload\s*=\s*['\"].*?['\"]",
+            r"(?i)javascript:\s*",
+            r"(?i)<svg\b[^>]*on\w+\s*=",
+        ],
     )
+    sanitized = [m.replace("<script", "<script [blocked]").replace("javascript:", "javascript:[blocked]") for m in matches]
+    return [m[:MAX_EVIDENCE_LENGTH] for m in sanitized]
 
 
 def _detect_insecure_auth(payload: str) -> list[str]:
