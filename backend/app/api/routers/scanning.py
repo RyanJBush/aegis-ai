@@ -138,10 +138,17 @@ def list_scans(
 @router.get("/jobs/{job_id}", response_model=ScanJobRead)
 def get_scan_job(
     job_id: int,
-    _: User = Depends(require_roles({Role.admin, Role.security_analyst, Role.developer, Role.viewer})),
+    workspace_id: int = Depends(get_workspace_id),
+    user: User = Depends(require_roles({Role.admin, Role.security_analyst, Role.developer, Role.viewer})),
     db: Session = Depends(get_db),
 ) -> ScanJobRead:
-    job = db.query(ScanJob).filter(ScanJob.id == job_id).first()
+    job = (
+        db.query(ScanJob)
+        .join(Scan, Scan.id == ScanJob.scan_id, isouter=True)
+        .filter(ScanJob.id == job_id)
+        .filter((Scan.workspace_id == workspace_id) | ((ScanJob.scan_id.is_(None)) & (ScanJob.requested_by_user_id == user.id)))
+        .first()
+    )
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan job not found")
     return ScanJobRead.model_validate(job)

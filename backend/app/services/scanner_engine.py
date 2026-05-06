@@ -114,6 +114,7 @@ def _detect_sqli(payload: str) -> list[str]:
             r"(?i)\bSLEEP\s*\(\s*\d+\s*\)",
             r"(?i)\bWAITFOR\s+DELAY\b",
             r"(?i)(;\s*DROP\s+TABLE\b|;\s*DELETE\s+FROM\b)",
+            r"(?i)(?:'|\"|\b(select|where|from|and|or)\b)[^\n]{0,80}--",
             r"(?i)--",
         ],
     )

@@ -18,7 +18,7 @@ function ScanningPage() {
     setLoading(true);
     setError(null);
     try {
-      const queued = await queueScan(target, payload);
+      const queued = await queueScan(target, payload, profile);
       setJob(queued);
       setLatestScan(null);
     } catch {
