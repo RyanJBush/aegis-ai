@@ -66,3 +66,21 @@ def test_phase1_rules_detect_insecure_headers_and_auth_misconfiguration() -> Non
     assert "AUTH_MISCONFIG" in keys
     assert all(f.description for f in findings)
     assert all(f.affected_endpoint == "/api/admin" for f in findings)
+
+
+def test_phase1_patterns_cover_time_based_sqli_and_redacted_auth_evidence() -> None:
+    registry = build_default_registry()
+    payload = """
+    POST /api/login HTTP/1.1
+    Authorization: Basic YWRtaW46c2VjcmV0
+    username=admin' OR 1=1; DROP TABLE users; --
+    query=test' OR SLEEP(5)--
+    """
+
+    findings = registry.run(payload, profile="quick")
+    sqli_evidence = [f.evidence for f in findings if f.rule_key == "SQLI"]
+    auth_evidence = [f.evidence for f in findings if f.rule_key == "AUTH_MISCONFIG"]
+
+    assert any("SLEEP" in ev.upper() for ev in sqli_evidence)
+    assert any("DROP TABLE" in ev.upper() for ev in sqli_evidence)
+    assert "authorization: basic <redacted>" in auth_evidence

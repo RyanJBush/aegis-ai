@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timezone
 
+from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -35,6 +36,17 @@ SEVERITY_ORDER = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 
 
 class ScanningService:
+    @staticmethod
+    def _validate_baseline_scan(db: Session, workspace_id: int, baseline_scan_id: int | None) -> None:
+        if baseline_scan_id is None:
+            return
+        baseline = db.query(Scan.id).filter(Scan.id == baseline_scan_id, Scan.workspace_id == workspace_id).first()
+        if not baseline:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Baseline scan not found in current workspace",
+            )
+
     @staticmethod
     def enqueue_scan(db: Session, user_id: int, workspace_id: int, payload: ScanRequest) -> ScanJobRead:
         job = ScanJob(requested_by_user_id=user_id, status="queued")
@@ -90,6 +102,7 @@ class ScanningService:
     @staticmethod
     def run_scan(db: Session, user_id: int, workspace_id: int, payload: ScanRequest) -> ScanResponse:
         clean_target = validate_scan_target(payload.target.strip().lower())
+        ScanningService._validate_baseline_scan(db=db, workspace_id=workspace_id, baseline_scan_id=payload.baseline_scan_id)
         scan = Scan(
             target=clean_target,
             payload=payload.payload,
@@ -364,7 +377,7 @@ class ScanningService:
     ) -> ScanResponse:
         normalized_target = f"{payload.target.strip()}#{payload.snippet_type}"
         mapped = ScanRequest(
-            target=normalized_target,
+            target=normalized_target if normalized_target.startswith(("http://", "https://")) else f"https://snippet.local/{normalized_target.lstrip('/')}",
             payload=payload.snippet,
             profile=payload.profile,
             baseline_scan_id=payload.baseline_scan_id,

@@ -72,8 +72,8 @@ export async function runScanNow(target: string, payload: string, profile: ScanR
   const scan = await postJsonRequest<RawScanRecord, { target: string; payload: string; profile: ScanRecord['profile'] }>('/scanning/run', { target, payload, profile });
   return mapScanRecord(scan);
 }
-export async function queueScan(target: string, payload: string): Promise<ScanJob> {
-  const job = await postJsonRequest<RawScanJob, { target: string; payload: string; profile: string }>('/scanning/queue', { target, payload, profile: 'standard' });
+export async function queueScan(target: string, payload: string, profile: ScanRecord['profile']): Promise<ScanJob> {
+  const job = await postJsonRequest<RawScanJob, { target: string; payload: string; profile: ScanRecord['profile'] }>('/scanning/queue', { target, payload, profile });
   return mapJob(job);
 }
 export async function getJob(jobId: string): Promise<ScanJob> { return mapJob(await getJson<RawScanJob>(`/scanning/jobs/${jobId}`)); }
