@@ -17,6 +17,9 @@ from app.core.config import settings
 from app.db.session import engine
 from app.models.base import Base
 
+MAX_DEMO_CREDENTIAL_LENGTH = 120
+MAX_DEMO_QUERY_LENGTH = 200
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -84,11 +87,11 @@ def create_application() -> FastAPI:
         return {"status": "ok"}
 
     class DemoLoginRequest(BaseModel):
-        username: str = Field(min_length=1, max_length=120)
-        password: str = Field(min_length=1, max_length=120)
+        username: str = Field(min_length=1, max_length=MAX_DEMO_CREDENTIAL_LENGTH)
+        password: str = Field(min_length=1, max_length=MAX_DEMO_CREDENTIAL_LENGTH)
 
     class DemoSearchRequest(BaseModel):
-        query: str = Field(min_length=1, max_length=200)
+        query: str = Field(min_length=1, max_length=MAX_DEMO_QUERY_LENGTH)
 
     @app.post("/login", tags=["demo"])
     def demo_login(payload: DemoLoginRequest) -> dict[str, object]:

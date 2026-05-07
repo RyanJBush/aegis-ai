@@ -34,13 +34,14 @@ from app.services.scanner_engine import build_default_registry
 logger = logging.getLogger(__name__)
 DEFAULT_SCANNER = build_default_registry()
 MAX_FAILURE_REASON_LENGTH = 1000
+MAX_SAFE_EXAMPLE_INPUT_LENGTH = 220
 SEVERITY_ORDER = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 
 
 class ScanningService:
     @staticmethod
     def _safe_example_request(target: str, payload: str) -> str:
-        snippet = payload.replace("\r", " ").replace("\n", " ")[:220]
+        snippet = payload.replace("\r", " ").replace("\n", " ")[:MAX_SAFE_EXAMPLE_INPUT_LENGTH]
         snippet = re.sub(r"(?i)<\s*script", "<script [blocked]", snippet)
         snippet = re.sub(r"(?i)javascript\s*:", "javascript:[blocked]", snippet)
         return f"POST {target}\nContent-Type: application/json\n\n" + json_dumps({"input": snippet})
