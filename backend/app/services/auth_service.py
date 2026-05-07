@@ -136,6 +136,10 @@ class AuthService:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
         expires_at = _as_utc(db_token.expires_at)
+        if expires_at is None:
+            db_token.revoked = True
+            db.commit()
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
         if expires_at and expires_at < datetime.now(timezone.utc):
             db_token.revoked = True
             db.commit()

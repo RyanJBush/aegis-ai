@@ -34,6 +34,12 @@ def _run(payload: ScanRequest, user: User, workspace_id: int, db: Session) -> Sc
     return ScanningService.run_scan(db=db, user_id=user.id, workspace_id=workspace_id, payload=payload)
 
 
+def _is_sqlite_dialect(db: Session) -> bool:
+    bind = getattr(db, "bind", None)
+    dialect_name = getattr(getattr(bind, "dialect", None), "name", None)
+    return dialect_name == "sqlite"
+
+
 @router.post("/run", response_model=ScanResponse)
 def run_scan(
     payload: ScanRequest,
@@ -54,7 +60,7 @@ def queue_scan(
 ) -> ScanJobRead:
     job = ScanningService.enqueue_scan(db=db, user_id=user.id, workspace_id=workspace_id, payload=payload)
     # In SQLite/test mode, execute immediately in-process so queue lifecycle remains deterministic.
-    if getattr(getattr(db, "bind", None), "dialect", None) and db.bind.dialect.name == "sqlite":
+    if _is_sqlite_dialect(db):
         ScanningService.process_queued_job(job.id, user.id, workspace_id, payload, db=db)
     else:
         background_tasks.add_task(ScanningService.process_queued_job, job.id, user.id, workspace_id, payload)

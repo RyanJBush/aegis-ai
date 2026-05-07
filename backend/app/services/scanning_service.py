@@ -1,4 +1,5 @@
 import logging
+import re
 from json import dumps as json_dumps
 from datetime import datetime, timezone
 
@@ -40,7 +41,8 @@ class ScanningService:
     @staticmethod
     def _safe_example_request(target: str, payload: str) -> str:
         snippet = payload.replace("\r", " ").replace("\n", " ")[:220]
-        snippet = snippet.replace("<script", "<script [blocked]").replace("javascript:", "javascript:[blocked]")
+        snippet = re.sub(r"(?i)<\s*script", "<script [blocked]", snippet)
+        snippet = re.sub(r"(?i)javascript\s*:", "javascript:[blocked]", snippet)
         return f"POST {target}\nContent-Type: application/json\n\n" + json_dumps({"input": snippet})
 
     @staticmethod
