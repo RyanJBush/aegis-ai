@@ -84,6 +84,27 @@ curl -X POST http://localhost:8000/api/v1/scanning/run \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"target":"https://app.example.com/login","payload":"\" OR 1=1 -- <script>alert(1)</script>"}'
+
+# Re-run a scan using a prior scan as baseline
+curl -X POST http://localhost:8000/api/v1/scanning/1/rerun \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+## Safe Demo Endpoints (Testing Only)
+
+These endpoints are intentionally vulnerable simulations for demos and testing workflows only.
+They are controlled, non-exploitable simulations and are isolated from production auth/search logic.
+
+```bash
+# SQLi simulation (demo-only)
+curl -X POST http://localhost:8000/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin'\'' OR 1=1 --","password":"pass"}'
+
+# XSS simulation (demo-only)
+curl -X POST http://localhost:8000/search \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"<script>alert(1)</script>"}'
 ```
 
 ## Security Notes
@@ -112,6 +133,9 @@ make ci-check
 ## Demo Readiness
 
 - Demo runbook: `docs/demo-runbook.md`
+- Use **Scanning** page to run scans and **Scan Results** page to export reports and re-run selected scans.
+- Use **Dashboard** for KPI cards and severity/time trend visualizations.
+- Use **Vulnerability Detail** for endpoint, safe request/response evidence, OWASP mapping, and remediation workflow.
 - Recommended walkthrough order:
   1. Dashboard
   2. Scan Ops

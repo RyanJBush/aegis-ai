@@ -1,9 +1,12 @@
 import logging
+import re
 import time
 import uuid
+from html import escape
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -79,6 +82,44 @@ def create_application() -> FastAPI:
     @app.get("/health", tags=["health"])
     def health_check() -> dict[str, str]:
         return {"status": "ok"}
+
+    class DemoLoginRequest(BaseModel):
+        username: str = Field(min_length=1, max_length=120)
+        password: str = Field(min_length=1, max_length=120)
+
+    class DemoSearchRequest(BaseModel):
+        query: str = Field(min_length=1, max_length=200)
+
+    @app.post("/login", tags=["demo"])
+    def demo_login(payload: DemoLoginRequest) -> dict[str, object]:
+        """
+        Demo/testing only: simulated SQLi detection endpoint.
+        This does not execute dynamic SQL and is intentionally isolated from production auth flows.
+        """
+        suspicious = bool(re.search(r"(?i)(\bor\b\s+\d+=\d+|union\s+select|--|;\s*drop\s+table)", payload.username))
+        return {
+            "demo_only": True,
+            "warning": "Testing endpoint only. Do not use in production.",
+            "simulated_vulnerability": "SQL injection pattern detected" if suspicious else None,
+            "login_result": "blocked" if suspicious else "accepted",
+            "safe_evidence": escape(payload.username)[:80],
+            "security_note": "Use parameterized queries and strict input validation.",
+        }
+
+    @app.post("/search", tags=["demo"])
+    def demo_search(payload: DemoSearchRequest) -> dict[str, object]:
+        """
+        Demo/testing only: simulated reflected-XSS behavior using safely escaped output.
+        """
+        suspicious = bool(re.search(r"(?i)(<script\b|onerror\s*=|onload\s*=|javascript:)", payload.query))
+        safe_render = escape(payload.query)
+        return {
+            "demo_only": True,
+            "warning": "Testing endpoint only. Do not use in production.",
+            "simulated_vulnerability": "XSS payload pattern detected" if suspicious else None,
+            "safe_rendered_result": f"Search results for: {safe_render}",
+            "security_note": "Always output-encode untrusted data and use a strict CSP.",
+        }
 
     @app.get("/ready", tags=["health"])
     def readiness_check() -> dict[str, str]:

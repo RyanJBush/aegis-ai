@@ -263,6 +263,52 @@ button {
   margin-top: 0.8rem;
 }
 
+.trend-bars {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.trend-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 48px;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.trend-label,
+.trend-value {
+  color: #9ab3d0;
+  font-size: 0.8rem;
+}
+
+.trend-track {
+  height: 10px;
+  background: #0d1c33;
+  border: 1px solid #2b4060;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.trend-fill {
+  height: 100%;
+}
+
+.trend-critical {
+  background: #ff8aa0;
+}
+
+.trend-high {
+  background: #ffb173;
+}
+
+.trend-medium {
+  background: #f3d17d;
+}
+
+.trend-low {
+  background: #86deff;
+}
+
 .evidence-block {
   margin: 0;
   padding: 0.75rem;

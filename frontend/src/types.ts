@@ -5,9 +5,11 @@ export type Vulnerability = {
   scanId?: string;
   title: string;
   severity: Severity;
-  status: 'open' | 'triaged' | 'fixed' | 'accepted_risk' | 'false_positive';
+  status: 'open' | 'in_progress' | 'resolved' | 'triaged' | 'fixed' | 'accepted_risk' | 'false_positive';
   cvss: number;
+  description: string;
   endpoint: string;
+  owaspCategory?: string;
   rule: string;
   explanation: string;
   impact: string;
@@ -16,6 +18,8 @@ export type Vulnerability = {
   reasonCode?: string;
   cweId?: string;
   evidence?: string;
+  exampleRequest?: string;
+  exampleResponse?: string;
   secureExample?: string;
   assignedOwner?: string | null;
   notes?: string | null;
@@ -57,8 +61,10 @@ export type FindingTimelineEvent = {
 
 export type KpiSummary = {
   total_findings: number;
+  critical_findings: number;
   high_severity_findings: number;
   open_findings: number;
+  resolved_findings: number;
   fixed_findings: number;
   scan_coverage_percent: number;
   average_scan_time_ms: number;

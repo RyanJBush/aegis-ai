@@ -8,11 +8,11 @@ import {
   downloadScanJsonReport,
   downloadScanSarifReport,
   fetchRemediationChecklist,
+  rerunScan,
   fetchScans,
   fetchSuppressions,
   fetchVulnerabilities,
 } from '../services/platformApi';
-import { downloadScanJsonReport, downloadScanSarifReport, fetchScans, fetchVulnerabilities } from '../services/platformApi';
 import { ScanJob, Vulnerability } from '../types';
 
 function ScanResultsPage() {
@@ -88,6 +88,29 @@ function ScanResultsPage() {
     }
   }
 
+  async function rerunSelectedScan() {
+    if (!selectedScanId) return;
+    try {
+      const rerun = await rerunScan(selectedScanId);
+      setNotice(`Triggered rerun scan #${rerun.id} from baseline #${selectedScanId}.`);
+      const scans = await fetchScans(20);
+      setScanItems(
+        scans.map((scan) => ({
+          id: scan.id,
+          target: scan.target,
+          status: scan.status === 'reviewed' ? 'completed' : scan.status,
+          findings: scan.findings,
+          startedAt: scan.createdAt,
+          duration: scan.durationMs ? `${scan.durationMs}ms` : 'pending',
+          scanId: scan.id,
+        })),
+      );
+      setSelectedScanId(String(rerun.id));
+    } catch {
+      setNotice('Failed to rerun selected scan.');
+    }
+  }
+
   return (
     <section className="stack">
       <PageHeader
@@ -103,6 +126,7 @@ function ScanResultsPage() {
           <p className="muted">Selected scan: {selectedScanId ? `#${selectedScanId}` : 'none'}</p>
           <button type="button" disabled={!selectedScanId} onClick={exportJson}>Export JSON</button>
           <button type="button" disabled={!selectedScanId} onClick={exportSarif}>Export SARIF</button>
+          <button type="button" disabled={!selectedScanId} onClick={rerunSelectedScan}>Re-run Scan</button>
           <button type="button" disabled={!selectedScanId} onClick={loadRemediationData}>Load Remediation Data</button>
         </div>
       </section>
