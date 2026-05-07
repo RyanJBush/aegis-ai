@@ -41,9 +41,10 @@ SEVERITY_ORDER = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 class ScanningService:
     @staticmethod
     def _safe_example_request(target: str, payload: str) -> str:
-        snippet = payload.replace("\r", " ").replace("\n", " ")[:MAX_SAFE_EXAMPLE_INPUT_LENGTH]
+        snippet = payload.replace("\r", " ").replace("\n", " ")
         snippet = re.sub(r"(?i)<\s*script", "<script [blocked]", snippet)
         snippet = re.sub(r"(?i)javascript\s*:", "javascript:[blocked]", snippet)
+        snippet = snippet[:MAX_SAFE_EXAMPLE_INPUT_LENGTH]
         return f"POST {target}\nContent-Type: application/json\n\n" + json_dumps({"input": snippet})
 
     @staticmethod
