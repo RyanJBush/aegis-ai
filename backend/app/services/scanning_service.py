@@ -348,7 +348,7 @@ class ScanningService:
             .all()
         )
         for day, finding_count in finding_rows:
-            iso_day = day.isoformat() if isinstance(day, date) else str(day)
+            iso_day = day.isoformat() if isinstance(day, (date, datetime)) else str(day)
             bucket.setdefault(iso_day, {"scans": 0.0, "findings": 0.0, "duration_sum": 0.0, "duration_count": 0.0})
             bucket[iso_day]["findings"] = float(finding_count)
 
