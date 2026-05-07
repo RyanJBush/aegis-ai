@@ -34,6 +34,12 @@ def _run(payload: ScanRequest, user: User, workspace_id: int, db: Session) -> Sc
     return ScanningService.run_scan(db=db, user_id=user.id, workspace_id=workspace_id, payload=payload)
 
 
+def _is_sqlite_dialect(db: Session) -> bool:
+    bind = getattr(db, "bind", None)
+    dialect_name = getattr(getattr(bind, "dialect", None), "name", None)
+    return dialect_name == "sqlite"
+
+
 @router.post("/run", response_model=ScanResponse)
 def run_scan(
     payload: ScanRequest,
@@ -53,7 +59,11 @@ def queue_scan(
     db: Session = Depends(get_db),
 ) -> ScanJobRead:
     job = ScanningService.enqueue_scan(db=db, user_id=user.id, workspace_id=workspace_id, payload=payload)
-    background_tasks.add_task(ScanningService.process_queued_job, job.id, user.id, workspace_id, payload)
+    # In SQLite/test mode, execute immediately in-process so queue lifecycle remains deterministic.
+    if _is_sqlite_dialect(db):
+        ScanningService.process_queued_job(job.id, user.id, workspace_id, payload, db=db)
+    else:
+        background_tasks.add_task(ScanningService.process_queued_job, job.id, user.id, workspace_id, payload)
     return job
 
 
@@ -162,6 +172,19 @@ def start_scan(
     db: Session = Depends(get_db),
 ) -> ScanResponse:
     return _run(payload=payload, user=user, workspace_id=workspace_id, db=db)
+
+
+@router.post("/{scan_id}/rerun", response_model=ScanResponse)
+def rerun_scan(
+    scan_id: int,
+    workspace_id: int = Depends(get_workspace_id),
+    user: User = Depends(require_roles({Role.admin, Role.security_analyst})),
+    db: Session = Depends(get_db),
+) -> ScanResponse:
+    rerun = ScanningService.rerun_scan(db=db, user_id=user.id, workspace_id=workspace_id, scan_id=scan_id)
+    if not rerun:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
+    return rerun
 
 
 @router.patch("/{scan_id}/status", response_model=ScanResponse)

@@ -216,3 +216,34 @@ def test_devsecops_snippet_scan_and_checklist(client: TestClient) -> None:
     assert checklist.status_code == 200
     assert len(checklist.json()["checklist"]) >= 1
 
+
+def test_demo_endpoints_are_controlled_and_marked_demo_only(client: TestClient) -> None:
+    login = client.post("/login", json={"username": "admin' OR 1=1 --", "password": "pass"})
+    assert login.status_code == 200
+    login_body = login.json()
+    assert login_body["demo_only"] is True
+    assert login_body["login_result"] == "blocked"
+    assert login_body["simulated_vulnerability"] is not None
+
+    search = client.post("/search", json={"query": "<script>alert(1)</script>"})
+    assert search.status_code == 200
+    search_body = search.json()
+    assert search_body["demo_only"] is True
+    assert search_body["simulated_vulnerability"] is not None
+    assert "<script>" not in search_body["safe_rendered_result"]
+
+
+def test_scan_rerun_creates_new_scan_with_baseline_link(client: TestClient) -> None:
+    token = authenticate_analyst(client)
+    initial = client.post(
+        "/api/v1/scanning/run",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"target": "https://svc.local", "payload": "' OR 1=1 --", "profile": "quick"},
+    )
+    assert initial.status_code == 200
+    initial_id = initial.json()["id"]
+
+    rerun = client.post(f"/api/v1/scanning/{initial_id}/rerun", headers={"Authorization": f"Bearer {token}"})
+    assert rerun.status_code == 200
+    assert rerun.json()["id"] != initial_id
+    assert rerun.json()["diff_summary"]["baseline_scan_id"] == initial_id

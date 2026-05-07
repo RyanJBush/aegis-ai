@@ -14,6 +14,8 @@ type RawVuln = {
   id: number;
   scan_id: number;
   title: string;
+  description: string;
+  affected_endpoint: string;
   severity: Vulnerability['severity'];
   status: Vulnerability['status'];
   rule_key: string;
@@ -22,6 +24,8 @@ type RawVuln = {
   reason_code: string;
   cwe_id: string;
   evidence: string;
+  example_request?: string | null;
+  example_response?: string | null;
   remediation: string;
   secure_example?: string | null;
   assigned_owner?: string | null;
@@ -76,6 +80,10 @@ export async function queueScan(target: string, payload: string, profile: ScanRe
   const job = await postJsonRequest<RawScanJob, { target: string; payload: string; profile: ScanRecord['profile'] }>('/scanning/queue', { target, payload, profile });
   return mapJob(job);
 }
+export async function rerunScan(scanId: string): Promise<ScanRecord> {
+  const scan = await postJsonRequest<RawScanRecord, Record<string, never>>(`/scanning/${scanId}/rerun`, {});
+  return mapScanRecord(scan);
+}
 export async function getJob(jobId: string): Promise<ScanJob> { return mapJob(await getJson<RawScanJob>(`/scanning/jobs/${jobId}`)); }
 export async function getFindingTimeline(vulnId: string): Promise<FindingTimelineEvent[]> {
   return (await getJson<{ events: FindingTimelineEvent[] }>(`/vulnerabilities/${vulnId}/timeline`)).events;
@@ -110,10 +118,11 @@ export async function fetchRuleHistory(limit = 25): Promise<RuleChangeEntry[]> {
 function mapRawVulnerability(vuln: RawVuln): Vulnerability {
   return {
     id: String(vuln.id), scanId: String(vuln.scan_id), title: vuln.title, severity: vuln.severity, status: vuln.status,
-    cvss: severityToCvss(vuln.severity), endpoint: vuln.owasp_category, rule: vuln.rule_key,
+    cvss: severityToCvss(vuln.severity), description: vuln.description, endpoint: vuln.affected_endpoint, owaspCategory: vuln.owasp_category, rule: vuln.rule_key,
     explanation: `${vuln.rule_key} matched scanner heuristics with ${Math.round(vuln.confidence * 100)}% confidence.`,
     impact: `Potential exploitation risk tied to ${vuln.owasp_category}.`, remediation: vuln.remediation,
     confidence: vuln.confidence, reasonCode: vuln.reason_code, cweId: vuln.cwe_id, evidence: vuln.evidence,
+    exampleRequest: vuln.example_request ?? undefined, exampleResponse: vuln.example_response ?? undefined,
     secureExample: vuln.secure_example ?? undefined, assignedOwner: vuln.assigned_owner ?? null, notes: vuln.notes ?? null,
     observedAt: vuln.created_at,
   };

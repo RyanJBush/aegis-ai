@@ -1,5 +1,7 @@
 import logging
-from datetime import datetime, timezone
+import re
+from json import dumps as json_dumps
+from datetime import date, datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import func
@@ -32,10 +34,29 @@ from app.services.scanner_engine import build_default_registry
 logger = logging.getLogger(__name__)
 DEFAULT_SCANNER = build_default_registry()
 MAX_FAILURE_REASON_LENGTH = 1000
+MAX_SAFE_EXAMPLE_INPUT_LENGTH = 220
 SEVERITY_ORDER = {"low": 1, "medium": 2, "high": 3, "critical": 4}
 
 
 class ScanningService:
+    @staticmethod
+    def _safe_example_request(target: str, payload: str) -> str:
+        snippet = payload.replace("\r", " ").replace("\n", " ")
+        snippet = re.sub(r"(?i)<\s*script", "<script [blocked]", snippet)
+        snippet = re.sub(r"(?i)javascript\s*:", "javascript:[blocked]", snippet)
+        snippet = snippet[:MAX_SAFE_EXAMPLE_INPUT_LENGTH]
+        return f"POST {target}\nContent-Type: application/json\n\n" + json_dumps({"input": snippet})
+
+    @staticmethod
+    def _safe_example_response(rule_key: str) -> str:
+        response_by_rule = {
+            "SQLI": {"status": "blocked", "reason": "sqli_pattern_detected"},
+            "XSS": {"status": "blocked", "reason": "xss_pattern_detected"},
+            "INSECURE_HEADERS": {"status": "warning", "reason": "header_hardening_required"},
+            "AUTH_MISCONFIG": {"status": "warning", "reason": "auth_configuration_review_required"},
+        }
+        return json_dumps(response_by_rule.get(rule_key, {"status": "warning", "reason": "security_review_required"}), indent=2)
+
     @staticmethod
     def _validate_baseline_scan(db: Session, workspace_id: int, baseline_scan_id: int | None) -> None:
         if baseline_scan_id is None:
@@ -65,39 +86,47 @@ class ScanningService:
         return ScanJobRead.model_validate(job)
 
     @staticmethod
-    def process_queued_job(job_id: int, user_id: int, workspace_id: int, payload: ScanRequest) -> None:
-        db = SessionLocal()
+    def process_queued_job(
+        job_id: int,
+        user_id: int,
+        workspace_id: int,
+        payload: ScanRequest,
+        db: Session | None = None,
+    ) -> None:
+        owned_session = db is None
+        session = db or SessionLocal()
         job: ScanJob | None = None
         try:
-            job = db.query(ScanJob).filter(ScanJob.id == job_id).first()
+            job = session.query(ScanJob).filter(ScanJob.id == job_id).first()
             if not job:
                 return
             job.status = "running"
             job.started_at = datetime.now(timezone.utc)
-            db.commit()
-            result = ScanningService.run_scan(db=db, user_id=user_id, workspace_id=workspace_id, payload=payload)
+            session.commit()
+            result = ScanningService.run_scan(db=session, user_id=user_id, workspace_id=workspace_id, payload=payload)
 
             job.scan_id = result.id
             job.status = "completed"
             job.completed_at = datetime.now(timezone.utc)
-            db.commit()
+            session.commit()
         except Exception as exc:
             if job:
                 job.status = "failed"
                 job.failure_reason = str(exc)[:MAX_FAILURE_REASON_LENGTH]
                 job.completed_at = datetime.now(timezone.utc)
                 AuditService.log(
-                    db,
+                    session,
                     action="scan_job_failed",
                     entity_type="scan_job",
                     entity_id=job.id,
                     actor_user_id=user_id,
                     details={"failure_reason": job.failure_reason},
                 )
-                db.commit()
+                session.commit()
             logger.exception("Queued scan job failed", extra={"job_id": job_id})
         finally:
-            db.close()
+            if owned_session:
+                session.close()
 
     @staticmethod
     def run_scan(db: Session, user_id: int, workspace_id: int, payload: ScanRequest) -> ScanResponse:
@@ -154,7 +183,11 @@ class ScanningService:
                         owasp_category=finding.owasp_category,
                         cwe_id=finding.cwe_id,
                         title=finding.title,
+                        description=finding.description,
+                        affected_endpoint=finding.affected_endpoint,
                         evidence=finding.evidence,
+                        example_request=ScanningService._safe_example_request(clean_target, payload.payload),
+                        example_response=ScanningService._safe_example_response(finding.rule_key),
                         remediation=finding.remediation,
                         secure_example=finding.secure_example,
                         dedupe_key=finding.dedupe_key,
@@ -231,6 +264,19 @@ class ScanningService:
         )
 
     @staticmethod
+    def rerun_scan(db: Session, *, user_id: int, workspace_id: int, scan_id: int) -> ScanResponse | None:
+        previous_scan = db.query(Scan).filter(Scan.id == scan_id, Scan.workspace_id == workspace_id).first()
+        if not previous_scan:
+            return None
+        rerun_payload = ScanRequest(
+            target=previous_scan.target,
+            payload=previous_scan.payload,
+            profile=previous_scan.profile,
+            baseline_scan_id=previous_scan.id,
+        )
+        return ScanningService.run_scan(db=db, user_id=user_id, workspace_id=workspace_id, payload=rerun_payload)
+
+    @staticmethod
     def mark_reviewed(db: Session, user_id: int, workspace_id: int, scan_id: int) -> Scan | None:
         scan = db.query(Scan).filter(Scan.id == scan_id, Scan.workspace_id == workspace_id).first()
         if not scan:
@@ -304,7 +350,7 @@ class ScanningService:
             .all()
         )
         for day, finding_count in finding_rows:
-            iso_day = day.isoformat()
+            iso_day = day.isoformat() if isinstance(day, (date, datetime)) else str(day)
             bucket.setdefault(iso_day, {"scans": 0.0, "findings": 0.0, "duration_sum": 0.0, "duration_count": 0.0})
             bucket[iso_day]["findings"] = float(finding_count)
 
