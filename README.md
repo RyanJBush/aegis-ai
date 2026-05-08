@@ -1,144 +1,145 @@
-# Aegis AI Monorepo
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
+![CI](https://github.com/RyanJBush/Secure-application-platform-and-vulnerability-scanner/actions/workflows/ci.yml/badge.svg)
 
-Security-focused monorepo scaffold for:
-- FastAPI backend
-- React frontend
-- PostgreSQL
-- JWT authentication + RBAC
-- Detection pipeline for SQLi/XSS patterns
-- Dockerized local environment + GitHub Actions CI
+# Aegis AI
 
-## Repository Structure
+> A secure full-stack web application with OWASP-aligned protections and an AI-powered vulnerability scanner that detects, classifies, and explains security risks in submitted payloads.
 
-```text
-backend/     FastAPI app (routers, models, services, tests)
-frontend/    React app (layouts, pages, API service placeholders)
-docs/        Architecture and API docs
-```
+---
 
-## Backend Security Capabilities (Implemented)
-- JWT-based register/login/me flow.
-- RBAC roles: `admin`, `analyst`, `viewer`.
-- Secure auth input constraints (email + password length policy).
-- Scan pipeline that evaluates payloads using SQLi/XSS detection rules.
-- Vulnerability persistence and reporting summary by severity/rule.
-- Basic logging for account creation, login events, and scans.
+## 🎯 What I Built & Why
 
-## Quick Start
+Most security tutorials show you how to exploit vulnerabilities — Aegis AI is built from the defender's side. I wanted to understand how production security platforms are actually structured: auth hardening, role-based access control, automated scanning pipelines, and audit trails. Key design decisions:
 
-### 1) Environment files
+- **JWT + RBAC with 3 roles** (Admin, Analyst, Viewer) — security tooling should itself be secure; every endpoint enforces role-appropriate access
+- **SQLi/XSS detection pipeline** — payloads are evaluated against a rule catalog, findings are persisted with severity classification, and summaries are queryable by rule or severity
+- **Safe demo endpoints** — intentionally vulnerable simulation routes (isolated from production auth/search logic) let you demonstrate detection workflows without real risk
+- **SARIF/JSON export** — scan results are exportable in standard formats for integration into CI/CD pipelines
+
+---
+
+## 📷 Features
+
+- **JWT authentication** — register/login/me flow with secure input constraints
+- **RBAC** — Admin, Analyst, and Viewer roles with enforced endpoint permissions
+- **Scan pipeline** — evaluates payloads against SQLi/XSS detection rules with severity classification
+- **Vulnerability persistence & reporting** — findings grouped by severity and rule, queryable via API
+- **SARIF/JSON export** — exportable scan results for CI/CD integration
+- **Audit logging** — account creation, login events, and scan activity logged
+- **React security dashboard** — posture metrics, vulnerability table, scan history, and remediation workflow
+- **Docker Compose** — one-command local stack
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend API | FastAPI + SQLAlchemy + PostgreSQL |
+| Auth | JWT with RBAC (3 roles) |
+| Scanning | Rule-based SQLi/XSS detection pipeline |
+| Frontend | React + Vite + TypeScript + Tailwind CSS |
+| Infra | Docker Compose + GitHub Actions CI |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Docker + Docker Compose
+- Python 3.11+
+- Node.js 20+
+
+### Docker (Recommended)
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
-```
-
-### 2) Run with Docker
-```bash
 make up
+# Frontend:         http://localhost:3000
+# Backend API docs: http://localhost:8000/docs
 ```
 
-Services:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
-
-### 3) Run locally without Docker
-Backend:
+### Local Development
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+# Backend
+python -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
 uvicorn app.main:app --app-dir backend --reload
+
+# Frontend
+cd frontend && npm install && npm run dev
 ```
 
-Frontend:
+### Example API Flow
 ```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### 4) Authenticate before using protected UI routes
-Most UI pages call protected API endpoints. Register and login from the API first, then sign in from `/login` in the web UI.
-
-```bash
-curl -X POST http://localhost:8000/api/v1/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"analyst@example.com","password":"StrongPassw0rd!","role":"security_analyst"}'
-```
-
-## Example API Flow
-```bash
-# Register analyst
+# 1. Register
 curl -X POST http://localhost:8000/api/v1/auth/register \
   -H 'Content-Type: application/json' \
   -d '{"email":"analyst@example.com","password":"StrongPassw0rd!","role":"analyst"}'
 
-# Login
+# 2. Login and capture token
 TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"analyst@example.com","password":"StrongPassw0rd!"}' | jq -r .access_token)
 
-# Run scan
+# 3. Run a scan
 curl -X POST http://localhost:8000/api/v1/scanning/run \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"target":"https://app.example.com/login","payload":"\" OR 1=1 -- <script>alert(1)</script>"}'
-
-# Re-run a scan using a prior scan as baseline
-curl -X POST http://localhost:8000/api/v1/scanning/1/rerun \
-  -H "Authorization: Bearer $TOKEN"
 ```
 
-## Safe Demo Endpoints (Testing Only)
-
-These endpoints are intentionally vulnerable simulations for demos and testing workflows only.
-They are controlled, non-exploitable simulations and are isolated from production auth/search logic.
-
+### Quality Checks
 ```bash
-# SQLi simulation (demo-only)
-curl -X POST http://localhost:8000/login \
-  -H 'Content-Type: application/json' \
-  -d '{"username":"admin'\'' OR 1=1 --","password":"pass"}'
-
-# XSS simulation (demo-only)
-curl -X POST http://localhost:8000/search \
-  -H 'Content-Type: application/json' \
-  -d '{"query":"<script>alert(1)</script>"}'
+make ci-check   # lint + tests + build
 ```
 
-## Security Notes
-- Replace default JWT secret and all credentials before production use.
-- Add token refresh/revocation and account lockout controls.
-- Add Alembic migrations and audit logging.
-- Expand detection coverage and tune false-positive handling.
+---
 
+## 🗂️ Repository Structure
 
-## Frontend Security Dashboard Pages
-- Dashboard (`/`): posture metrics + vulnerability table + scan history.
-- App Interface (`/app-interface`): payload input UI for scan execution workflow.
-- Scan Results (`/scan-results`): historical scan statuses and detected findings.
-- Vulnerability Detail (`/vulnerabilities/:id`): deep technical breakdown and remediation guidance.
-
-## Notes
-- The frontend TypeScript app is the supported runtime entrypoint (`src/main.tsx`).
-
-## Quality Gates (Phase 5)
-
-```bash
-# run lint + tests/build checks similar to CI
-make ci-check
+```
+backend/    FastAPI API, auth, RBAC, scan pipeline, vulnerability models, tests
+frontend/   React security dashboard (posture metrics, scan ops, vulnerability detail)
+docs/       Architecture, API reference, demo runbook
 ```
 
-## Demo Readiness
+---
 
-- Demo runbook: `docs/demo-runbook.md`
-- Use **Scanning** page to run scans and **Scan Results** page to export reports and re-run selected scans.
-- Use **Dashboard** for KPI cards and severity/time trend visualizations.
-- Use **Vulnerability Detail** for endpoint, safe request/response evidence, OWASP mapping, and remediation workflow.
-- Recommended walkthrough order:
-  1. Dashboard
-  2. Scan Ops
-  3. Scan Results (JSON/SARIF exports + remediation checklist)
-  4. Vulnerability Detail workflow
-  5. Governance (audit logs + rule history)
+## 📘 Demo Walkthrough
+
+Recommended order:
+1. **Dashboard** — posture KPIs and severity trend charts
+2. **Scan Ops** — submit a payload and watch the detection pipeline fire
+3. **Scan Results** — JSON/SARIF export and remediation checklist
+4. **Vulnerability Detail** — OWASP mapping, safe request/response evidence, remediation workflow
+5. **Governance** — audit logs and rule history
+
+Full runbook: `docs/demo-runbook.md`
+
+---
+
+## ⚠️ Security Notes
+
+- Replace the default JWT secret and all credentials before any production use
+- Safe demo endpoints (`/login`, `/search`) are controlled simulations isolated from production auth — for testing only
+- Add token refresh/revocation and account lockout controls before deploying publicly
+
+---
+
+## 📝 Key Learnings
+
+- Security tooling must itself be secure — designing RBAC for a vulnerability scanner forced me to think carefully about information sensitivity, not just action permissions
+- Detection pipelines benefit from persistence and audit trails; a scan result with no history is far less useful than one that shows regression over time
+- Exportable results (SARIF/JSON) are what make security tooling usable in real engineering workflows
+
+---
+
+## 📄 License
+
+MIT
