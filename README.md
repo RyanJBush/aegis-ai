@@ -6,7 +6,11 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![CI](https://github.com/RyanJBush/Secure-application-platform-and-vulnerability-scanner/actions/workflows/ci.yml/badge.svg)
 
-# Aegis AI
+# Obsidian
+
+**Secure Application & Vulnerability Scanning Platform**
+
+[**🔗 View Live Preview →**](https://www.perplexity.ai/computer/a/obsidian-preview-project-7-of-lCA5DWRgQoa4AN6VYPXAUQ)
 
 > A secure full-stack web application with OWASP-aligned protections and an AI-powered vulnerability scanner that detects, classifies, and explains security risks in submitted payloads.
 
@@ -14,7 +18,7 @@
 
 ## 🎯 What I Built & Why
 
-Most security tutorials show you how to exploit vulnerabilities — Aegis AI is built from the defender’s side. I wanted to understand how production security platforms are actually structured: auth hardening, role-based access control, automated scanning pipelines, and audit trails. Key design decisions:
+Most security tutorials show you how to exploit vulnerabilities — Obsidian is built from the defender’s side. I wanted to understand how production security platforms are actually structured: auth hardening, role-based access control, automated scanning pipelines, and audit trails. Key design decisions:
 
 - **JWT + RBAC with 3 roles** (Admin, Analyst, Viewer) — security tooling should itself be secure; every endpoint enforces role-appropriate access
 - **SQLi/XSS detection pipeline** — payloads are evaluated against a rule catalog, findings are persisted with severity classification, and summaries are queryable by rule or severity
