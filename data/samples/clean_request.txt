@@ -1,0 +1,10 @@
+POST /api/v1/login HTTP/1.1
+Host: demo.local
+Content-Type: application/json
+Authorization: Bearer eyJ...redacted...
+
+{"email": "user@example.com", "password": "<provided-via-form>"}
+
+# A well-formed request with no obvious attack patterns.
+# Used as a negative-case sample: the scanner should emit no high-confidence
+# injection findings against this payload.

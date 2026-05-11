@@ -1,0 +1,7 @@
+HTTP/1.1 200 OK
+Content-Type: text/html
+Server: nginx/1.18.0
+Access-Control-Allow-Origin: *
+
+<!-- Missing: Content-Security-Policy, Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options -->
+<html><body>hello</body></html>
