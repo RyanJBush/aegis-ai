@@ -6,8 +6,8 @@ from app.models.rule_change import RuleChangeEvent
 from app.models.scan import Scan
 from app.models.scan_job import ScanJob
 from app.models.user import Role, User
-from app.models.workspace import Workspace
 from app.models.vulnerability import Vulnerability
+from app.models.workspace import Workspace
 
 __all__ = [
     "Workspace",
