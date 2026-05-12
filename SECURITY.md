@@ -10,7 +10,7 @@
 
 Please **do not** open a public GitHub issue for security vulnerabilities.
 
-Instead, report them via email to **ryanjbush@gmail.com** with the subject line `[SECURITY] Aegis AI — <brief description>`.
+Instead, report them via email to **ryanjbush@gmail.com** with the subject line `[SECURITY] Obsidian — <brief description>`.
 
 Include:
 - A description of the vulnerability and its potential impact

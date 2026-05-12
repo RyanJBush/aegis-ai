@@ -1,90 +1,74 @@
-# Obsidian API Surface
+# Obsidian API Documentation
 
-Base URL: `/api/v1`
+Base path: `/api/v1`
 
-The FastAPI app also serves interactive docs at `/docs` (Swagger UI) and
-`/redoc`. Authenticated routes require a `Bearer` JWT obtained from
-`POST /auth/login`. Most write/scan/list endpoints additionally honor the
-RBAC role and workspace claim (`wid`) carried in the token.
+Interactive docs are available at `/docs` (Swagger UI) and `/redoc` when the backend is running.
 
-## Auth
+## API safety and usage intent
 
-- `POST /auth/register` — create an account (role: `admin`,
-  `security_analyst`, `developer`, or `viewer`).
-- `POST /auth/login` — returns access + refresh tokens; the access token
-  includes a workspace claim (`wid`).
-- `POST /auth/refresh` — rotates the refresh token.
-- `POST /auth/logout` — revokes the refresh token.
-- `GET /auth/me` — returns the current user record.
+These endpoints are intended for educational/local security workflows and authorized testing contexts only. Do not use this API to run scans against systems you do not own or explicitly control under written authorization.
+
+## Authentication
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
+- `GET /auth/me`
+
+Most endpoints require `Authorization: Bearer <access_token>`.
 
 ## Scanning
 
-- `GET /scanning` — workspace-scoped scan list with pagination.
-- `POST /scanning/run` — run a scan against an inline payload/target.
-- `POST /scanning/queue` — enqueue a background scan job.
-- `GET /scanning/jobs/{job_id}` — poll a queued job.
-- `PATCH /scanning/{scan_id}/status` — update a scan's lifecycle status.
-- `POST /scanning/devsecops/snippet` — scan inline code/config snippets
-  (developer/CI workflow).
-- `POST /scanning/devsecops/upload` — scan uploaded snippet/config files.
-- `GET /scanning/kpi/summary` — posture KPIs for the dashboard.
-- `GET /scanning/history/trends` — trend series for the dashboard.
-- `GET /scanning/{scan_id}/diff` — baseline diff for a scan.
-- `POST /scanning/{scan_id}/policy-gate` — CI pass/fail evaluation.
-- `GET /scanning/{scan_id}/suppressions` — baseline suppression export.
-- `GET /scanning/{scan_id}/remediation-checklist` — developer-facing fix
-  checklist derived from findings.
-- `GET /scanning/{scan_id}/reports/json` — JSON report bundle.
-- `GET /scanning/{scan_id}/reports/sarif` — SARIF report bundle.
+- `GET /scanning`
+- `POST /scanning/run`
+- `POST /scanning/queue`
+- `GET /scanning/jobs/{job_id}`
+- `PATCH /scanning/{scan_id}/status`
+- `POST /scanning/devsecops/snippet`
+- `POST /scanning/devsecops/upload`
+- `GET /scanning/kpi/summary`
+- `GET /scanning/history/trends`
+- `GET /scanning/{scan_id}/diff`
+- `POST /scanning/{scan_id}/policy-gate`
+- `GET /scanning/{scan_id}/suppressions`
+- `GET /scanning/{scan_id}/remediation-checklist`
+- `GET /scanning/{scan_id}/reports/json`
+- `GET /scanning/{scan_id}/reports/sarif`
 
-## Vulnerabilities
+### Scanner behavior notes
 
-- `GET /vulnerabilities` — workspace-scoped, paginated, sortable list.
-- `GET /vulnerabilities/{vuln_id}` — single finding detail.
-- `GET /vulnerabilities/reports/summary` — summary aggregations.
-- `PATCH /vulnerabilities/{vuln_id}/workflow` — update workflow state /
-  owner / notes.
-- `POST /vulnerabilities/{vuln_id}/comments` — add a triage comment.
-- `POST /vulnerabilities/{vuln_id}/risk-acceptance` — file a risk-acceptance
-  record.
-- `GET /vulnerabilities/{vuln_id}/timeline` — timeline events for the finding.
+- Findings include severity labels and implemented rule mappings.
+- OWASP/CWE tags are present where rule mappings exist.
+- SARIF output is provided for integration workflows where supported.
 
-## AI Assistant
+## Vulnerability operations
 
-- `GET /ai/scans/{scan_id}/executive-summary` — scan-level executive
-  summary, clustering findings by rule / OWASP / CWE.
-- `GET /ai/findings/{vuln_id}/insight` — finding-level plain-language
-  explanation with remediation and secure-recommendation context.
+- `GET /vulnerabilities`
+- `GET /vulnerabilities/{vuln_id}`
+- `GET /vulnerabilities/reports/summary`
+- `PATCH /vulnerabilities/{vuln_id}/workflow`
+- `POST /vulnerabilities/{vuln_id}/comments`
+- `POST /vulnerabilities/{vuln_id}/risk-acceptance`
+- `GET /vulnerabilities/{vuln_id}/timeline`
 
-The AI assistant is **deterministic** and derives its output from scanner
-evidence and OWASP/CWE mappings — no external LLM call is required.
+## Observability and governance
 
-## Observability
-
-- `GET /observability/audit-logs` — workspace-scoped audit log retrieval
-  with filtering and pagination.
-- `GET /observability/scan-metrics` — scan performance metrics summary for
-  dashboards and SLO tracking.
-- `POST /observability/rule-history` — record a scanner rule change event.
-- `GET /observability/rule-history` — query the scanner rule change history
-  for governance and change review.
+- `GET /observability/audit-logs`
+- `GET /observability/scan-metrics`
+- `POST /observability/rule-history`
+- `GET /observability/rule-history`
 
 ## Health
 
-- `GET /health` — liveness.
-- `GET /ready` — readiness with a live database probe.
+- `GET /health`
+- `GET /ready`
 
-## Multi-Tenant Workspace Enforcement
+## CI/CD integration pattern
 
-- Workspace model with tenant scoping on users, scans, and vulnerabilities.
-- Workspace claim (`wid`) enforced in JWT dependency checks.
-- Optional `X-Workspace-ID` header validated to prevent cross-tenant access.
-- Pagination/sorting supported for vulnerability and scan listings.
+- Local/CI runner can call CLI with `--fail-on` for threshold gates.
+- Backend policy-gate endpoint supports consistent pass/fail evaluation.
 
-## Conventions
+## Accuracy and assurance disclaimer
 
-- All authenticated endpoints expect `Authorization: Bearer <access_token>`.
-- Errors follow FastAPI's default JSON shape (`{"detail": ...}`).
-- Severity values used throughout: `critical`, `high`, `medium`, `low`.
-- OWASP category strings follow the OWASP Top 10 (2021) labels — see
-  [`owasp-mapping.md`](owasp-mapping.md).
+Obsidian API outputs are helpful for triage and developer feedback but are not complete security assurance artifacts by themselves. They should be used alongside broader AppSec practices and professional review processes.
