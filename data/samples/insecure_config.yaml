@@ -1,0 +1,22 @@
+# Sample insecure deployment config used to demonstrate config-audit rules.
+# This file is intentionally insecure for educational/demo purposes only.
+
+app:
+  debug: true
+  cors_allow_origins: ["*"]
+  verify_ssl: false
+
+auth:
+  auth_required: false
+  password: "admin"
+  jwt_secret: "change-this-in-production"
+
+container:
+  image: myapp:latest
+  securityContext:
+    runAsNonRoot: false
+    allow_privilege_escalation: true
+
+secrets:
+  api_token: "ghp_abcdefghijklmnopqrstuvwxyz1234567890"
+  aws_key: "AKIAIOSFODNN7EXAMPLE"

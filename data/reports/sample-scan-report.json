@@ -1,0 +1,68 @@
+{
+  "scan_id": "demo-scan-0001",
+  "profile": "deep",
+  "target": "data/samples/sqli_payload.txt",
+  "generated_at": "2026-05-11T00:00:00Z",
+  "summary": {
+    "total_findings": 4,
+    "by_severity": {"critical": 1, "high": 2, "medium": 1, "low": 0},
+    "by_owasp": {
+      "A01:2021-Broken Access Control": 0,
+      "A02:2021-Cryptographic Failures": 1,
+      "A03:2021-Injection": 2,
+      "A05:2021-Security Misconfiguration": 1,
+      "A07:2021-Identification and Authentication Failures": 0
+    }
+  },
+  "findings": [
+    {
+      "rule_key": "SQLI",
+      "title": "Potential SQL Injection pattern",
+      "severity": "high",
+      "confidence": 0.9,
+      "owasp_category": "A03:2021-Injection",
+      "cwe_id": "CWE-89",
+      "evidence": "' OR 1=1 -- ",
+      "affected_endpoint": "/api/v1/login",
+      "remediation": "Use parameterized queries and strict allow-list input validation.",
+      "secure_example": "Use prepared statements and bind variables for all user-provided parameters."
+    },
+    {
+      "rule_key": "XSS",
+      "title": "Potential Cross-Site Scripting pattern",
+      "severity": "medium",
+      "confidence": 0.85,
+      "owasp_category": "A03:2021-Injection",
+      "cwe_id": "CWE-79",
+      "evidence": "<script>alert(1)</script>",
+      "affected_endpoint": "/search",
+      "remediation": "Apply contextual output encoding and enforce a strict Content Security Policy.",
+      "secure_example": "Encode untrusted output by context and use non-inline scripts with CSP nonce/hash."
+    },
+    {
+      "rule_key": "SECRET_DETECTION",
+      "title": "Potential secret token/private key exposure",
+      "severity": "critical",
+      "confidence": 0.9,
+      "owasp_category": "A02:2021-Cryptographic Failures",
+      "cwe_id": "CWE-798",
+      "evidence": "ghp_<redacted>",
+      "affected_endpoint": "unknown",
+      "remediation": "Remove committed secrets, rotate credentials, and enforce secret scanning pre-commit checks.",
+      "secure_example": "Use secret managers and inject credentials at runtime via environment/identity bindings."
+    },
+    {
+      "rule_key": "INSECURE_CONFIG",
+      "title": "Insecure configuration indicator",
+      "severity": "high",
+      "confidence": 0.7,
+      "owasp_category": "A05:2021-Security Misconfiguration",
+      "cwe_id": "CWE-16",
+      "evidence": "debug=true",
+      "affected_endpoint": "unknown",
+      "remediation": "Disable debug in production and constrain CORS to trusted origins.",
+      "secure_example": "Set debug=false and configure explicit CORS origin allow-lists."
+    }
+  ],
+  "notes": "Sample report committed for documentation/demo purposes. Generated against the included sample inputs in data/samples/."
+}

