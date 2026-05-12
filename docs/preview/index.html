@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Obsidian — Portfolio Preview</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #0b0f0b;
+      --line: #1e2a1e;
+      --text: #e8ffe8;
+      --muted: #8db38d;
+      --neon: #62ff9b;
+      --white: #f7f7f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 20px; }
+    .card {
+      background: linear-gradient(180deg, rgba(11,15,11,.95), rgba(4,7,4,.95));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 0 0 1px rgba(98,255,155,.08) inset;
+    }
+    h1, h2, h3 { margin-top: 0; }
+    h1 { font-size: clamp(1.6rem, 3vw, 2.5rem); color: var(--neon); }
+    h2 { font-size: clamp(1.1rem, 2vw, 1.4rem); color: var(--white); }
+    .hero p { color: var(--muted); max-width: 72ch; }
+    .tag { display: inline-block; border: 1px solid #335533; color: var(--neon); padding: 4px 10px; border-radius: 999px; font-size: .82rem; }
+    .disclaimer {
+      margin: 16px 0;
+      border-left: 4px solid #ffcc66;
+      background: #191300;
+      padding: 12px;
+      color: #ffe7b3;
+    }
+    .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+    .step { text-align: center; padding: 10px; border: 1px dashed #335533; border-radius: 10px; }
+    .arrow { color: #6baa6b; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .badge { display: inline-block; margin: 4px 6px 0 0; padding: 5px 9px; border-radius: 8px; background: #0f1a0f; border: 1px solid #274427; color: #bfffcf; font-size: .82rem; }
+    a { color: #8ed7ff; }
+    footer { color: var(--muted); margin: 20px 0 6px; text-align: center; font-size: .9rem; }
+    @media (max-width: 760px) {
+      .pipeline { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .arrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card hero">
+      <span class="tag">Portfolio Preview</span>
+      <h1>Obsidian</h1>
+      <p>Secure Application Platform and Vulnerability Scanner — a demo-scale AppSec project for showing practical scanning, triage metadata, and reporting workflows.</p>
+      <div class="disclaimer">
+        ⚠️ <strong>Educational tool only.</strong> Obsidian is designed for local, educational, and portfolio demonstration purposes. It is not a replacement for professional SAST, DAST, IAST, penetration testing, or a professional security review.
+      </div>
+      <p><a href="https://github.com/RyanJBush/Secure-application-platform-and-vulnerability-scanner">View repository on GitHub</a></p>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <h2>Scanning Pipeline</h2>
+      <div class="pipeline" aria-label="Scanning pipeline diagram">
+        <div class="step">1. Input</div>
+        <div class="step">2. Parse</div>
+        <div class="step">3. Detect</div>
+        <div class="step">4. Report</div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <h2>Key Scan Categories</h2>
+      <div class="grid">
+        <div class="step"><h3>Injection Patterns</h3><p>Rule matches for SQLi/XSS-style payload signatures in demo inputs.</p></div>
+        <div class="step"><h3>Security Misconfig</h3><p>Configuration checks for risky defaults and insecure settings patterns.</p></div>
+        <div class="step"><h3>Auth/Credential Risks</h3><p>Rules for insecure auth patterns and exposed credential-like content.</p></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <h2>Tech Stack</h2>
+      <span class="badge">FastAPI</span>
+      <span class="badge">Python</span>
+      <span class="badge">SQLAlchemy</span>
+      <span class="badge">React</span>
+      <span class="badge">TypeScript</span>
+      <span class="badge">Vite</span>
+      <span class="badge">Docker Compose</span>
+      <span class="badge">SARIF / JSON Reporting</span>
+    </section>
+
+    <footer>
+      Built by <a href="https://github.com/RyanJBush">Ryan Bush</a>
+    </footer>
+  </main>
+</body>
+</html>

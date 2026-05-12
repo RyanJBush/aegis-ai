@@ -1,34 +1,12 @@
-# Resume Bullets — Obsidian (Honest + AppSec-Focused)
+# Resume Bullets — Obsidian
 
-Use these for AppSec, backend, security tooling, and CI/CD applications. Keep wording accurate to implemented functionality.
+University of Maryland student studying Information Science and Electrical Engineering with a Business minor.
 
-## Core bullets
-
-- Built **Obsidian**, an educational secure-application platform and vulnerability scanner using FastAPI, React, and Python rule-based analysis.
-- Implemented scanner findings with **severity, OWASP, and CWE mapping** plus structured evidence for triage workflows.
-- Added **SARIF and JSON reporting** to support developer feedback loops and downstream tooling integration.
-- Developed a CLI with **policy gating (`--fail-on`)** to support CI/CD pass/fail checks on severity thresholds.
-- Implemented backend security controls including JWT auth flows, role-based access checks, and workspace-aware access patterns.
-- Documented architecture, API surface, ethical-use policy, and security disclosure policy to keep claims aligned with actual implementation.
-
-## AppSec-focused variants
-
-- Designed a rule-registry scanning pipeline for local code/config payload checks with explicit limitations and OWASP/CWE traceability.
-- Built vulnerability workflow endpoints (status/comments/risk acceptance) to model practical remediation and governance processes.
-- Added observability endpoints for audit logs, scanner metrics, and rule-history tracking.
-
-## Backend-focused variants
-
-- Built and documented a FastAPI service layer with auth, scanning, reporting, and observability routes.
-- Structured scanning and vulnerability services into modular backend components to support maintainable security tooling evolution.
-
-## CI/CD-focused variants
-
-- Integrated scan-threshold gating patterns suitable for CI pipelines using CLI exit codes and API policy checks.
-- Produced machine-consumable SARIF/JSON outputs to enable automated security checks in delivery workflows.
-
-## Honesty guardrail
-
-When using these bullets, keep this qualifier in project descriptions:
-
-> “Educational/local scanner for owned or authorized targets; not a replacement for SAST/DAST/IAST, penetration testing, or professional security review.”
+- Built Obsidian, a portfolio demo security platform using FastAPI, React, TypeScript, and Python scanning services.
+- Implemented a rule-based scanner that flags suspicious patterns in sample inputs and configuration files.
+- Mapped scanner findings to OWASP categories and CWE IDs defined in the rule registry for triage context.
+- Exposed scanning, findings, and remediation workflow endpoints through a FastAPI backend API.
+- Added JSON and SARIF report output to support machine-readable review and downstream security tooling experiments.
+- Developed a CLI scanning flow with `--fail-on` severity thresholds for demo-scale pipeline gating behavior.
+- Structured vulnerability workflows with status, comments, and risk acceptance updates for governance-style review.
+- Documented architecture, API behavior, and ethical-use boundaries to keep project claims aligned with implementation.
