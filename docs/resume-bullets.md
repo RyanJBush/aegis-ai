@@ -1,98 +1,34 @@
-# Resume Bullets — Obsidian
+# Resume Bullets — Obsidian (Honest + AppSec-Focused)
 
-Concise, ATS-friendly one-liners derived from real work in this repo. Pick
-the 5–8 strongest for your resume; keep the rest for cover letters,
-LinkedIn, or recruiter conversations.
+Use these for AppSec, backend, security tooling, and CI/CD applications. Keep wording accurate to implemented functionality.
 
-All claims below map to verifiable code or docs in this repository.
+## Core bullets
 
-## Headline bullets (pick 5–8 for resume)
+- Built **Obsidian**, an educational secure-application platform and vulnerability scanner using FastAPI, React, and Python rule-based analysis.
+- Implemented scanner findings with **severity, OWASP, and CWE mapping** plus structured evidence for triage workflows.
+- Added **SARIF and JSON reporting** to support developer feedback loops and downstream tooling integration.
+- Developed a CLI with **policy gating (`--fail-on`)** to support CI/CD pass/fail checks on severity thresholds.
+- Implemented backend security controls including JWT auth flows, role-based access checks, and workspace-aware access patterns.
+- Documented architecture, API surface, ethical-use policy, and security disclosure policy to keep claims aligned with actual implementation.
 
-- Built a **Python/FastAPI vulnerability scanner** with a pluggable rule
-  registry, three detection profiles (`quick / standard / deep`), and
-  OWASP Top 10 (2021) + CWE tagging on every finding.
-- Designed a **rule-registry scanner engine** with severity scoring,
-  per-finding confidence, deterministic dedupe keys, and remediation
-  guidance — covering parts of A01, A02, A03, A05, A07, and A08.
-- Implemented **JWT authentication with rotating refresh tokens, RBAC across
-  four roles**, bcrypt password hashing, password policy, account lockout,
-  and per-endpoint auth rate limiting.
-- Designed a **multi-tenant workspace model** with a JWT `wid` claim and
-  cross-workspace request blocking enforced at the FastAPI dependency layer.
-- Built a **CLI scanner with a `--fail-on <severity>` policy gate** plus a
-  matching `/scanning/{id}/policy-gate` API endpoint, suitable for blocking
-  PRs in CI/CD on high-severity findings.
-- Generated **SARIF + JSON scan reports** and an auto-generated remediation
-  checklist for developer-facing fix workflows.
-- Authored a **GitHub Actions DevSecOps pipeline** running `ruff`, `bandit`,
-  `mypy`, and `pytest` on every push and PR, plus a frontend lint + build
-  stage.
-- Implemented **security-headers middleware** (CSP, X-Frame-Options,
-  X-Content-Type-Options, no-store cache control) and request-ID propagation
-  for traceability.
-- Wrote **pytest coverage** across scanner unit rules, auth/RBAC flows, the
-  scanning pipeline, the API surface, and the CLI — including negative-case
-  "clean input" fixtures.
+## AppSec-focused variants
 
-## Topic-specific bullets
+- Designed a rule-registry scanning pipeline for local code/config payload checks with explicit limitations and OWASP/CWE traceability.
+- Built vulnerability workflow endpoints (status/comments/risk acceptance) to model practical remediation and governance processes.
+- Added observability endpoints for audit logs, scanner metrics, and rule-history tracking.
 
-### OWASP Top 10
-- Mapped each scanner rule to a 2021 OWASP Top 10 category and CWE ID, and
-  documented coverage and explicit gaps in [`owasp-mapping.md`](owasp-mapping.md).
-- Implemented detection rules touching Injection (A03), Cryptographic
-  Failures (A02), Security Misconfiguration (A05), Broken Access Control
-  (A01), Identification & Authentication Failures (A07), and Software & Data
-  Integrity Failures (A08).
+## Backend-focused variants
 
-### Vulnerability scanning
-- Built a modular rule registry with per-rule severity, confidence,
-  OWASP/CWE tagging, profile gating, and stable dedupe keys.
-- Generated **SARIF** and JSON-format scan reports for ingestion into CI/CD
-  security gates and GitHub code-scanning style dashboards.
+- Built and documented a FastAPI service layer with auth, scanning, reporting, and observability routes.
+- Structured scanning and vulnerability services into modular backend components to support maintainable security tooling evolution.
 
-### Secure coding
-- Used parameterized queries via SQLAlchemy, contextual output-encoding
-  patterns, and Pydantic schemas for strict input validation at API
-  boundaries.
-- Added security-headers middleware (CSP, X-Frame-Options,
-  X-Content-Type-Options, no-store) and request-ID propagation.
+## CI/CD-focused variants
 
-### Authentication
-- Implemented JWT access tokens with rotating refresh tokens, bcrypt
-  password hashing, password-policy enforcement, account lockout, and
-  per-endpoint auth rate limiting.
+- Integrated scan-threshold gating patterns suitable for CI pipelines using CLI exit codes and API policy checks.
+- Produced machine-consumable SARIF/JSON outputs to enable automated security checks in delivery workflows.
 
-### Authorization
-- Enforced RBAC at the API dependency layer for `admin`, `security_analyst`,
-  `developer`, and `viewer` roles, plus workspace-scoped tenancy with
-  cross-workspace request blocking via a JWT `wid` claim.
+## Honesty guardrail
 
-### DevSecOps
-- Built a GitHub Actions pipeline running `ruff`, `bandit`, `mypy`, and
-  `pytest` on every push and PR, with a CLI `--fail-on` policy gate for
-  blocking high-severity findings.
-- Added `/scanning/{id}/policy-gate` plus a CLI flag to support
-  fail-the-build behavior for CI/CD integration.
+When using these bullets, keep this qualifier in project descriptions:
 
-### Security testing
-- Authored a pytest suite spanning scanner rules, auth flows, RBAC
-  enforcement, and the CLI, including negative-case fixtures to guard
-  against false positives.
-- Wrote intentionally insecure sample inputs under `data/samples/` to drive
-  both demos and regression tests.
-
-### Observability & governance
-- Added audit-log query, scan-metric summary, and scanner rule-change
-  history endpoints (`/observability/*`) for AppSec operations and
-  governance review.
-
-## Notes on phrasing
-
-- Each bullet is **action → artifact → measurable scope** (rules, roles,
-  files, tests).
-- All numbers above are grounded in this repo. Don't pad with imagined
-  metrics (user counts, uptime, "production" usage) — this is an honest
-  educational portfolio build, framed as such throughout.
-- The scanner is **not** a substitute for professional SAST / DAST / IAST
-  tools or authorized penetration testing — keep this distinction in mind
-  when paraphrasing for a resume.
+> “Educational/local scanner for owned or authorized targets; not a replacement for SAST/DAST/IAST, penetration testing, or professional security review.”
