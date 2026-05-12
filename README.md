@@ -1,67 +1,68 @@
 # Obsidian — Secure Application Platform and Vulnerability Scanner
 
-Obsidian is an **educational, local-first AppSec platform** that combines a FastAPI backend, React frontend, and a rule-based vulnerability scanner for developer security workflows.
+Portfolio demo for local-first application security scanning workflows built with FastAPI, React, and Python.
 
-> **Scope and safety:** Use this project only on systems you own, local lab targets, or systems where you have explicit written authorization. Obsidian is not intended for unauthorized testing and is not production security software.
+⚠️ **Educational tool only.** Obsidian is designed for local, educational, and portfolio demonstration purposes. It is not a replacement for professional SAST, DAST, IAST, penetration testing, or a professional security review.
 
-## What Obsidian does today
+Obsidian is a portfolio-scale AppSec project focused on transparent, grounded implementation. It demonstrates how scan findings can move from pattern detection to triage-friendly outputs in a full-stack workflow. The project is intentionally scoped for demo use on owned or explicitly authorized targets.
 
-- Runs **pattern-based security scans** against text/snippet/config inputs.
-- Tags findings with **severity, OWASP category, and CWE IDs**.
-- Exports results as **JSON and SARIF**.
-- Provides a **CLI** with policy gating via `--fail-on <severity>` for CI/CD pipelines.
-- Provides backend endpoints and a frontend dashboard for scan workflows.
+## What this project demonstrates
 
-## What Obsidian does *not* claim
+- Implements a rule-based scanner for text and configuration inputs
+- Labels findings with severity plus OWASP/CWE identifiers from implemented rules
+- Exports scan results in JSON and SARIF formats
+- Provides a CLI with `--fail-on` severity gating behavior
+- Exposes backend/frontend flows for scanning, findings review, and governance-style workflow updates
 
-Obsidian is intentionally framed as a portfolio and educational tool. It **does not** replace:
+## Tech stack
 
-- commercial or enterprise **SAST**,
-- runtime/traffic-focused **DAST**,
-- instrumentation-driven **IAST**,
-- authorized **penetration testing**, or
-- a professional **security review**.
+- **Backend:** FastAPI, SQLAlchemy, Pydantic, Python
+- **Frontend:** React, TypeScript, Vite
+- **Scanner:** Python rule-registry engine
+- **Tooling:** Docker Compose, pytest, CLI runner in `scripts/scan.py`
 
-Use it as a learning platform and a lightweight guardrail in local development—not as sole security assurance.
+## Architecture overview
 
-## Responsible use and authorization
+- High-level architecture: [docs/architecture.md](docs/architecture.md)
+- OWASP/CWE mapping scope: [docs/owasp-mapping.md](docs/owasp-mapping.md)
+- API reference: [docs/api.md](docs/api.md)
 
-Before scanning any target, confirm one of the following is true:
-
-1. You own the target system, or
-2. The target is a local/test environment created for security exercises, or
-3. You have explicit written authorization to test.
-
-See [ETHICS.md](ETHICS.md) and [SECURITY.md](SECURITY.md) for policy and disclosure expectations.
-
-## Implemented capabilities snapshot
-
-| Area | Implemented in repo |
-|---|---|
-| Scanner | Rule-registry scanner with profile gating (`quick`, `standard`, `deep`) |
-| Security taxonomy | OWASP Top 10 + CWE tagging on implemented rules |
-| Reporting | JSON + SARIF report generation |
-| CLI | Local scanner runner with fail-on severity gate |
-| API | FastAPI routes for auth, scanning, findings, observability |
-| CI/CD | Lint/type/test pipeline and CLI gate integration path |
-
-For details of OWASP mapping coverage and known gaps, see [docs/owasp-mapping.md](docs/owasp-mapping.md).
-
-## Quick local demo (CLI)
+## How to run locally
 
 ```bash
 pip install -r backend/requirements.txt
 python scripts/scan.py data/samples/sqli_payload.txt
 python scripts/scan.py --json data/samples/insecure_config.yaml
-python scripts/scan.py --fail-on high data/samples/sqli_payload.txt ; echo "exit=$?"
+python scripts/scan.py --fail-on high data/samples/sqli_payload.txt
 ```
 
-## Documentation index
+For the full stack workflow, see [docs/demo-runbook.md](docs/demo-runbook.md).
 
-- [Architecture](docs/architecture.md)
-- [API docs](docs/api.md)
-- [Demo runbook](docs/demo-runbook.md)
-- [Resume bullets](docs/resume-bullets.md)
-- [Screenshot guide](docs/screenshots/README.md)
-- [Ethics policy](ETHICS.md)
-- [Security policy](SECURITY.md)
+## Demo workflow
+
+1. Run a sample scan against files in `data/samples/`
+2. Review findings and metadata (severity, OWASP, CWE)
+3. Export JSON or SARIF reports
+4. Walk through dashboard and remediation-oriented UI views
+5. Demonstrate CLI gate behavior with `--fail-on`
+
+## Screenshots / demo
+
+See screenshot index and capture notes: [docs/screenshots/README.md](docs/screenshots/README.md)
+
+Portfolio preview page: [docs/preview/index.html](docs/preview/index.html)
+
+## Limitations and future work
+
+- Obsidian is a demo-scale scanner and does not provide comprehensive vulnerability coverage
+- Pattern-based detection can miss context-sensitive or runtime-only issues
+- CI integration is not wired as a repository workflow yet; current support is CLI/API patterns that can be integrated externally
+- Future work: broader rule coverage, richer validation corpus, and optional integrations for automated pipeline use
+
+## Resume bullets
+
+- [docs/resume-bullets.md](docs/resume-bullets.md)
+
+## License
+
+This project is released under the [MIT License](LICENSE).

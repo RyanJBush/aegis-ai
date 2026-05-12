@@ -1,40 +1,25 @@
 # Screenshot Documentation — Obsidian
 
-Use this folder for recruiter-facing evidence of implemented UI and workflow behavior.
+This directory currently contains captured screenshots that align with implemented demo workflows.
 
-## Required screenshot set
+## Captured screenshots
 
-| File | What to capture | Why it matters |
-|---|---|---|
-| `01-dashboard.png` | Dashboard posture + severity distribution | Shows AppSec visibility UX |
-| `02-scan-findings.png` | Findings list with severity/OWASP/CWE fields | Shows triage data quality |
-| `03-remediation-checklist.png` | Remediation checklist view | Shows developer handoff flow |
-| `04-sarif-export.png` | SARIF/JSON export evidence | Shows integration-oriented output |
-| `05-api-docs.png` | FastAPI `/docs` page | Shows discoverable API contract |
-| `06-cli-output.png` | CLI scan command + output | Shows local scanner utility |
-| `06b-cli-fail-on.png` | CLI fail-on example with non-zero exit | Shows CI/CD gate behavior |
+- `01-dashboard.png` — Dashboard overview and security posture widgets
+- `02-scan-findings.png` — Findings list with severity and taxonomy fields
+- `03-remediation-checklist.png` — Remediation checklist workflow view
+- `04-sarif-export.png` — Export/reporting view including SARIF output context
+- `05-api-docs.png` — FastAPI interactive API docs page
+- `06-cli-output.png` — CLI scan command output
+- `06b-cli-fail-on.png` — CLI `--fail-on` example showing threshold behavior
 
-## Capture rules
+## Screenshot checklist still needed (optional refreshes)
 
-- Capture only local/demo data or owned/authorized targets.
-- Never include secrets, live tokens, private URLs, or customer data.
-- Keep screenshots faithful to the current implemented product state.
-- If a screenshot uses mocked/fallback data, label it clearly in this document.
+- [ ] Mobile viewport capture of dashboard
+- [ ] API report download flow with JSON and SARIF side-by-side
+- [ ] Updated scan run showing current sample payload set
 
-## Suggested capture procedure
+## Capture notes
 
-1. Start backend and frontend locally.
-2. Run a sample scan from `data/samples/`.
-3. Capture dashboard, findings, remediation, API docs, and CLI output.
-4. Verify naming matches table above.
-5. Reference images from `README.md`.
-
-## README image embed format
-
-```md
-![Obsidian dashboard](docs/screenshots/01-dashboard.png)
-```
-
-## Accuracy note
-
-Screenshots should reinforce the same honesty standard used across docs: educational/local scanning, authorized targets only, and no claim of replacing professional security assessment workflows.
+- Use only local demo data or owned/authorized targets.
+- Exclude secrets, private tokens, and customer data.
+- If mocked data appears in a screenshot, label it clearly near the image in README/demo docs.
