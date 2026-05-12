@@ -1,25 +1,30 @@
 # Screenshot Documentation — Obsidian
 
-This directory currently contains captured screenshots that align with implemented demo workflows.
+These screenshots support Obsidian's **portfolio/demo narrative** as a local educational scanner.
 
 ## Captured screenshots
 
-- `01-dashboard.png` — Dashboard overview and security posture widgets
-- `02-scan-findings.png` — Findings list with severity and taxonomy fields
-- `03-remediation-checklist.png` — Remediation checklist workflow view
-- `04-sarif-export.png` — Export/reporting view including SARIF output context
-- `05-api-docs.png` — FastAPI interactive API docs page
-- `06-cli-output.png` — CLI scan command output
-- `06b-cli-fail-on.png` — CLI `--fail-on` example showing threshold behavior
+- `01-dashboard.png` — Dashboard overview with scan posture widgets
+- `02-scan-findings.png` — Findings list with severity, OWASP, and CWE fields
+- `03-remediation-checklist.png` — Remediation queue/checklist workflow
+- `04-sarif-export.png` — Reporting/export view (JSON/SARIF context)
+- `05-api-docs.png` — FastAPI interactive API docs
+- `06-cli-output.png` — CLI scan output example
+- `06b-cli-fail-on.png` — CLI `--fail-on` threshold behavior example
 
-## Screenshot checklist still needed (optional refreshes)
+## How to use these in docs/portfolio
 
-- [ ] Mobile viewport capture of dashboard
-- [ ] API report download flow with JSON and SARIF side-by-side
-- [ ] Updated scan run showing current sample payload set
+- Use them in README/demo docs as **UI Preview** images rather than implying a hosted production system.
+- Label any seeded/mock data clearly.
+- Keep examples tied to local sample inputs from `data/samples/` when possible.
 
-## Capture notes
+## Optional refresh checklist
 
-- Use only local demo data or owned/authorized targets.
-- Exclude secrets, private tokens, and customer data.
-- If mocked data appears in a screenshot, label it clearly near the image in README/demo docs.
+- [ ] Mobile viewport capture of dashboard/findings
+- [ ] Updated CLI output using current sample payloads
+- [ ] JSON output screenshot from `--json --profile deep`
+
+## Capture safety notes
+
+- Capture only owned/local test data.
+- Do not include secrets, private tokens, or personal/customer data.

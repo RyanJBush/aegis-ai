@@ -6,102 +6,160 @@
   <title>Obsidian — Portfolio Preview</title>
   <style>
     :root {
-      --bg: #000000;
-      --panel: #0b0f0b;
-      --line: #1e2a1e;
-      --text: #e8ffe8;
-      --muted: #8db38d;
-      --neon: #62ff9b;
-      --white: #f7f7f7;
+      --bg: #020402;
+      --panel: #091109;
+      --panel-2: #0c170c;
+      --line: #1f3a1f;
+      --text: #e9ffe9;
+      --muted: #9ec79e;
+      --accent: #5dff9b;
+      --warn-bg: #1b1404;
+      --warn-line: #b38a2e;
+      --link: #9ad6ff;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      background: var(--bg);
+      background: radial-gradient(circle at top, #081308 0%, var(--bg) 60%);
       color: var(--text);
-      line-height: 1.5;
+      line-height: 1.55;
     }
-    .wrap { max-width: 1040px; margin: 0 auto; padding: 20px; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 22px; }
     .card {
-      background: linear-gradient(180deg, rgba(11,15,11,.95), rgba(4,7,4,.95));
+      background: linear-gradient(180deg, rgba(12, 23, 12, 0.96), rgba(8, 13, 8, 0.96));
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 18px;
-      box-shadow: 0 0 0 1px rgba(98,255,155,.08) inset;
+      box-shadow: 0 0 0 1px rgba(93, 255, 155, 0.08) inset;
     }
-    h1, h2, h3 { margin-top: 0; }
-    h1 { font-size: clamp(1.6rem, 3vw, 2.5rem); color: var(--neon); }
-    h2 { font-size: clamp(1.1rem, 2vw, 1.4rem); color: var(--white); }
-    .hero p { color: var(--muted); max-width: 72ch; }
-    .tag { display: inline-block; border: 1px solid #335533; color: var(--neon); padding: 4px 10px; border-radius: 999px; font-size: .82rem; }
+    .tag {
+      display: inline-block;
+      border: 1px solid #2e5f2e;
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: var(--accent);
+      font-size: 0.8rem;
+    }
+    h1 { margin: 10px 0 8px; color: var(--accent); font-size: clamp(1.7rem, 4vw, 2.6rem); }
+    h2 { margin-top: 0; color: #f2fff2; font-size: clamp(1.08rem, 2.3vw, 1.42rem); }
+    h3 { margin-top: 0; }
+    p { margin: 0.55rem 0; }
+    .muted { color: var(--muted); }
     .disclaimer {
-      margin: 16px 0;
-      border-left: 4px solid #ffcc66;
-      background: #191300;
+      margin-top: 14px;
       padding: 12px;
-      color: #ffe7b3;
+      border-left: 4px solid var(--warn-line);
+      background: var(--warn-bg);
+      color: #ffe6af;
     }
-    .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
-    .step { text-align: center; padding: 10px; border: 1px dashed #335533; border-radius: 10px; }
-    .arrow { color: #6baa6b; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .badge { display: inline-block; margin: 4px 6px 0 0; padding: 5px 9px; border-radius: 8px; background: #0f1a0f; border: 1px solid #274427; color: #bfffcf; font-size: .82rem; }
-    a { color: #8ed7ff; }
-    footer { color: var(--muted); margin: 20px 0 6px; text-align: center; font-size: .9rem; }
-    @media (max-width: 760px) {
+    .pipeline {
+      margin-top: 8px;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      align-items: center;
+    }
+    .step, .arrow {
+      border: 1px dashed #3a6d3a;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      background: #0b150b;
+    }
+    .arrow { font-weight: bold; color: #9adf9a; }
+    .categories {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .cat {
+      border: 1px solid #2b4d2b;
+      background: var(--panel-2);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .badges { margin-top: 8px; }
+    .badge {
+      display: inline-block;
+      margin: 4px 6px 0 0;
+      padding: 5px 9px;
+      border-radius: 8px;
+      border: 1px solid #345e34;
+      background: #0d1a0d;
+      color: #cbffcb;
+      font-size: 0.82rem;
+    }
+    a { color: var(--link); }
+    footer { text-align: center; color: var(--muted); margin: 18px 0 8px; font-size: 0.9rem; }
+    @media (max-width: 840px) {
       .pipeline { grid-template-columns: 1fr; }
-      .grid { grid-template-columns: 1fr; }
-      .arrow { display: none; }
+      .categories { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <section class="card hero">
+    <section class="card">
       <span class="tag">Portfolio Preview</span>
       <h1>Obsidian</h1>
-      <p>Secure Application Platform and Vulnerability Scanner — a demo-scale AppSec project for showing practical scanning, triage metadata, and reporting workflows.</p>
+      <p class="muted">Secure Application Platform and Vulnerability Scanner — an educational local scanner by a University of Maryland student studying Information Science and Electrical Engineering with a Business minor.</p>
       <div class="disclaimer">
-        ⚠️ <strong>Educational tool only.</strong> Obsidian is designed for local, educational, and portfolio demonstration purposes. It is not a replacement for professional SAST, DAST, IAST, penetration testing, or a professional security review.
+        ⚠️ <strong>Educational/local scanner only.</strong> Obsidian is built for learning and portfolio demonstration. It does not replace professional security testing or expert review.
       </div>
-      <p><a href="https://github.com/RyanJBush/Secure-application-platform-and-vulnerability-scanner">View repository on GitHub</a></p>
+      <p style="margin-top:12px;"><a href="https://github.com/RyanJBush/Secure-application-platform-and-vulnerability-scanner">Repository: RyanJBush/Secure-application-platform-and-vulnerability-scanner</a></p>
     </section>
 
     <section class="card" style="margin-top:14px;">
-      <h2>Scanning Pipeline</h2>
-      <div class="pipeline" aria-label="Scanning pipeline diagram">
-        <div class="step">1. Input</div>
-        <div class="step">2. Parse</div>
-        <div class="step">3. Detect</div>
-        <div class="step">4. Report</div>
+      <h2>Pipeline Overview</h2>
+      <div class="pipeline" aria-label="Pipeline diagram">
+        <div class="step">Input</div>
+        <div class="arrow">→</div>
+        <div class="step">Parse</div>
+        <div class="arrow">→</div>
+        <div class="step">Detect</div>
+        <div class="arrow">→</div>
+        <div class="step">Report</div>
       </div>
     </section>
 
     <section class="card" style="margin-top:14px;">
-      <h2>Key Scan Categories</h2>
-      <div class="grid">
-        <div class="step"><h3>Injection Patterns</h3><p>Rule matches for SQLi/XSS-style payload signatures in demo inputs.</p></div>
-        <div class="step"><h3>Security Misconfig</h3><p>Configuration checks for risky defaults and insecure settings patterns.</p></div>
-        <div class="step"><h3>Auth/Credential Risks</h3><p>Rules for insecure auth patterns and exposed credential-like content.</p></div>
+      <h2>Implemented Scan Categories</h2>
+      <div class="categories">
+        <article class="cat">
+          <h3>Injection Patterns</h3>
+          <p class="muted">Regex checks for SQLi and XSS payload signatures in input text.</p>
+        </article>
+        <article class="cat">
+          <h3>Auth & Access Signals</h3>
+          <p class="muted">Rules for weak auth settings, basic auth usage, and permissive access flags.</p>
+        </article>
+        <article class="cat">
+          <h3>Config & Header Hardening</h3>
+          <p class="muted">Checks for insecure config defaults and missing/permissive HTTP security headers.</p>
+        </article>
+        <article class="cat">
+          <h3>Secret Exposure Patterns</h3>
+          <p class="muted">Detection of token/private-key style strings and sensitive credential-like content.</p>
+        </article>
       </div>
     </section>
 
     <section class="card" style="margin-top:14px;">
       <h2>Tech Stack</h2>
-      <span class="badge">FastAPI</span>
-      <span class="badge">Python</span>
-      <span class="badge">SQLAlchemy</span>
-      <span class="badge">React</span>
-      <span class="badge">TypeScript</span>
-      <span class="badge">Vite</span>
-      <span class="badge">Docker Compose</span>
-      <span class="badge">SARIF / JSON Reporting</span>
+      <div class="badges">
+        <span class="badge">Python</span>
+        <span class="badge">FastAPI</span>
+        <span class="badge">SQLAlchemy</span>
+        <span class="badge">React</span>
+        <span class="badge">TypeScript</span>
+        <span class="badge">Vite</span>
+        <span class="badge">pytest</span>
+        <span class="badge">CLI: scripts/scan.py</span>
+      </div>
     </section>
 
-    <footer>
-      Built by <a href="https://github.com/RyanJBush">Ryan Bush</a>
-    </footer>
+    <footer>Built for education, portfolio review, and local demo workflows.</footer>
   </main>
 </body>
 </html>
