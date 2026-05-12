@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_workspace_id, require_roles
 from app.db.session import get_db
 from app.models.user import Role, User
-from app.schemas.observability import AuditLogRead, RuleChangeCreate, RuleChangeRead, ScanMetricsSummary
+from app.schemas.observability import (
+    AuditLogRead,
+    RuleChangeCreate,
+    RuleChangeRead,
+    ScanMetricsSummary,
+)
 from app.services.observability_service import ObservabilityService
 
 router = APIRouter()

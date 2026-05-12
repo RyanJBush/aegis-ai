@@ -6,7 +6,12 @@ from app.models.rule_change import RuleChangeEvent
 from app.models.scan import Scan
 from app.models.user import User
 from app.models.vulnerability import Vulnerability
-from app.schemas.observability import AuditLogRead, RuleChangeCreate, RuleChangeRead, ScanMetricsSummary
+from app.schemas.observability import (
+    AuditLogRead,
+    RuleChangeCreate,
+    RuleChangeRead,
+    ScanMetricsSummary,
+)
 from app.services.audit_service import AuditService
 
 

@@ -1,7 +1,7 @@
 import logging
 import re
-from json import dumps as json_dumps
 from datetime import date, datetime, timezone
+from json import dumps as json_dumps
 
 from fastapi import HTTPException, status
 from sqlalchemy import func
@@ -13,7 +13,9 @@ from app.models.scan_job import ScanJob
 from app.models.vulnerability import Vulnerability
 from app.schemas.scanning import (
     CIGateReport,
+    DevSecOpsSnippetScanRequest,
     PolicyGateRequest,
+    RemediationChecklistResponse,
     SarifReport,
     ScanDiffSummary,
     ScanJobRead,
@@ -23,8 +25,6 @@ from app.schemas.scanning import (
     ScanTrendPoint,
     ScanTrendResponse,
     SuppressionExport,
-    RemediationChecklistResponse,
-    DevSecOpsSnippetScanRequest,
 )
 from app.services.alert_service import AlertService
 from app.services.audit_service import AuditService

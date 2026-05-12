@@ -20,6 +20,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: backend/requirements.txt
       - name: Install dependencies
         run: |
           pip install --upgrade pip
@@ -41,7 +42,6 @@ jobs:
     defaults:
       run:
         working-directory: frontend
-    if: ${{ hashFiles('frontend/package.json') != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
