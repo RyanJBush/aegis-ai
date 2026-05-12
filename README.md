@@ -1,67 +1,104 @@
 # Obsidian — Secure Application Platform and Vulnerability Scanner
 
-Portfolio demo for local-first application security scanning workflows built with FastAPI, React, and Python.
+> **Educational disclaimer:** Obsidian is a local, educational scanner built for portfolio and learning use. It is **not** a replacement for professional security testing, secure code review, penetration testing, or commercial SAST/DAST platforms.
 
-⚠️ **Educational tool only.** Obsidian is designed for local, educational, and portfolio demonstration purposes. It is not a replacement for professional SAST, DAST, IAST, penetration testing, or a professional security review.
+Obsidian is a project by a **University of Maryland student studying Information Science and Electrical Engineering with a Business minor**. It demonstrates how a rule-based scanner can parse text-like inputs, flag risky patterns, and return structured findings through a CLI and a FastAPI + React interface.
 
-Obsidian is a portfolio-scale AppSec project focused on transparent, grounded implementation. It demonstrates how scan findings can move from pattern detection to triage-friendly outputs in a full-stack workflow. The project is intentionally scoped for demo use on owned or explicitly authorized targets.
+## Summary
 
-## What this project demonstrates
+Obsidian scans local payload files (or stdin) with regex-based rules and reports matched evidence with:
+- Severity and confidence
+- OWASP category and CWE identifier
+- Suggested remediation and secure example
+- JSON output for automation-style consumption
 
-- Implements a rule-based scanner for text and configuration inputs
-- Labels findings with severity plus OWASP/CWE identifiers from implemented rules
-- Exports scan results in JSON and SARIF formats
-- Provides a CLI with `--fail-on` severity gating behavior
-- Exposes backend/frontend flows for scanning, findings review, and governance-style workflow updates
+It is intentionally scoped for transparent behavior and interview-friendly demos, not exhaustive coverage.
+
+## What it demonstrates
+
+- Rule registry design and profile-based execution (`quick`, `standard`, `deep`)
+- Pattern checks for:
+  - Injection payload indicators (SQLi/XSS)
+  - Authentication and access-control misconfiguration patterns
+  - Security header and configuration hardening issues
+  - Secret/token/private-key leakage patterns
+- Reporting flows:
+  - Human-readable CLI table
+  - JSON output (`--json`)
+  - Non-zero exit behavior for severity gates (`--fail-on`)
+- Full-stack portfolio workflow with backend APIs and frontend findings/governance views
 
 ## Tech stack
 
-- **Backend:** FastAPI, SQLAlchemy, Pydantic, Python
+- **Backend:** Python, FastAPI, SQLAlchemy, Pydantic
 - **Frontend:** React, TypeScript, Vite
-- **Scanner:** Python rule-registry engine
-- **Tooling:** Docker Compose, pytest, CLI runner in `scripts/scan.py`
+- **Scanner engine:** Python rule registry (`backend/app/services/scanner_engine.py`)
+- **CLI runner:** `scripts/scan.py`
+- **Dev/testing:** pytest, Docker Compose
 
-## Architecture overview
+## Architecture
 
-- High-level architecture: [docs/architecture.md](docs/architecture.md)
-- OWASP/CWE mapping scope: [docs/owasp-mapping.md](docs/owasp-mapping.md)
-- API reference: [docs/api.md](docs/api.md)
+- Architecture walkthrough: [docs/architecture.md](docs/architecture.md)
+- OWASP/CWE mapping notes: [docs/owasp-mapping.md](docs/owasp-mapping.md)
+- API docs summary: [docs/api.md](docs/api.md)
 
-## How to run locally
+## Local run instructions
+
+### 1) Install dependencies
 
 ```bash
 pip install -r backend/requirements.txt
+```
+
+### 2) Run a quick sample scan
+
+```bash
 python scripts/scan.py data/samples/sqli_payload.txt
-python scripts/scan.py --json data/samples/insecure_config.yaml
+```
+
+### 3) Try JSON mode and profile depth
+
+```bash
+python scripts/scan.py --json --profile deep data/samples/insecure_config.yaml
+```
+
+### 4) Try severity-gate behavior (good for recruiter demos)
+
+```bash
 python scripts/scan.py --fail-on high data/samples/sqli_payload.txt
 ```
 
-For the full stack workflow, see [docs/demo-runbook.md](docs/demo-runbook.md).
+If a finding at or above the threshold is present, the command exits with code `1`.
 
-## Demo workflow
+## Demo workflow (recruiter-friendly)
 
-1. Run a sample scan against files in `data/samples/`
-2. Review findings and metadata (severity, OWASP, CWE)
-3. Export JSON or SARIF reports
-4. Walk through dashboard and remediation-oriented UI views
-5. Demonstrate CLI gate behavior with `--fail-on`
+1. Scan a sample file from `data/samples/`.
+2. Re-run with `--json` to show structured output.
+3. Re-run with `--fail-on high` to show pipeline-style gate behavior.
+4. Open the app demo flow from [docs/demo-runbook.md](docs/demo-runbook.md) for dashboard + remediation screens.
 
-## Screenshots / demo
+## Screenshots
 
-See screenshot index and capture notes: [docs/screenshots/README.md](docs/screenshots/README.md)
-
-Portfolio preview page: [docs/preview/index.html](docs/preview/index.html)
+- Screenshot index and capture notes: [docs/screenshots/README.md](docs/screenshots/README.md)
+- Portfolio/UI preview page: [docs/preview/index.html](docs/preview/index.html)
 
 ## Limitations and future work
 
-- Obsidian is a demo-scale scanner and does not provide comprehensive vulnerability coverage
-- Pattern-based detection can miss context-sensitive or runtime-only issues
-- CI integration is not wired as a repository workflow yet; current support is CLI/API patterns that can be integrated externally
-- Future work: broader rule coverage, richer validation corpus, and optional integrations for automated pipeline use
+### Current limitations
+- Regex pattern matching can produce false positives/false negatives.
+- Scanner behavior is limited to implemented rules and text evidence patterns.
+- It does not perform runtime exploitation, dynamic crawling, or full application threat modeling.
+- Findings should be treated as triage signals that need human validation.
+
+### Future improvements
+- Expand rule corpus and test fixtures.
+- Add richer parser/context awareness to reduce noise.
+- Add optional CI wiring examples for local teams.
+- Improve rule tuning UX in the frontend.
 
 ## Resume bullets
 
-- [docs/resume-bullets.md](docs/resume-bullets.md)
+See: [docs/resume-bullets.md](docs/resume-bullets.md)
 
 ## License
 

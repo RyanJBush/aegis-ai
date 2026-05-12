@@ -2,11 +2,10 @@
 
 University of Maryland student studying Information Science and Electrical Engineering with a Business minor.
 
-- Built Obsidian, a portfolio demo security platform using FastAPI, React, TypeScript, and Python scanning services.
-- Implemented a rule-based scanner that flags suspicious patterns in sample inputs and configuration files.
-- Mapped scanner findings to OWASP categories and CWE IDs defined in the rule registry for triage context.
-- Exposed scanning, findings, and remediation workflow endpoints through a FastAPI backend API.
-- Added JSON and SARIF report output to support machine-readable review and downstream security tooling experiments.
-- Developed a CLI scanning flow with `--fail-on` severity thresholds for demo-scale pipeline gating behavior.
-- Structured vulnerability workflows with status, comments, and risk acceptance updates for governance-style review.
-- Documented architecture, API behavior, and ethical-use boundaries to keep project claims aligned with implementation.
+- Built Obsidian, an educational local security-scanning project with a FastAPI backend, React/TypeScript frontend, and Python scanning engine.
+- Implemented a registry-driven scanner (`build_default_registry`) with profile levels (`quick`, `standard`, `deep`) to control rule depth during scans.
+- Wrote parsing/detection logic for SQLi, XSS, insecure headers, auth misconfiguration, access-control flags, insecure config defaults, and secret-leak indicators.
+- Added structured finding metadata (severity, confidence, OWASP category, CWE ID, remediation, secure examples, dedupe key) to support triage-style reporting.
+- Built a CLI workflow (`scripts/scan.py`) supporting table output, JSON mode, stdin/file inputs, and severity-based gating with `--fail-on` exit behavior.
+- Integrated scan-related APIs and vulnerability workflow endpoints in FastAPI for dashboard-style review and remediation tracking.
+- Added practical developer documentation (architecture, runbooks, screenshot guide, and portfolio preview) to keep claims aligned with implemented features.
