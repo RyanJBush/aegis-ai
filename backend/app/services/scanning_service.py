@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models.scan import Scan
 from app.models.scan_job import ScanJob
+from app.models.scan_history import ScanHistory
 from app.models.vulnerability import Vulnerability
 from app.schemas.scanning import (
     CIGateReport,
@@ -208,6 +209,11 @@ class ScanningService:
                 scan.duration_ms = int((scan.completed_at - scan.started_at).total_seconds() * 1000)
 
             db.add_all(findings)
+            sev = {"critical":0,"high":0,"medium":0,"low":0}
+            for f in findings:
+                if not f.is_suppressed and f.severity in sev: sev[f.severity]+=1
+            risk_score = (sev["critical"]*10)+(sev["high"]*7)+(sev["medium"]*4)+(sev["low"]*1)
+            db.add(ScanHistory(scan_id=scan.id, workspace_id=workspace_id, target_url=scan.target, scan_timestamp=scan.completed_at, total_findings=len(findings), critical_count=sev["critical"], high_count=sev["high"], medium_count=sev["medium"], low_count=sev["low"], overall_risk_score=float(risk_score)))
             critical_count = sum(1 for finding in findings if finding.severity == "critical" and not finding.is_suppressed)
             AlertService.notify_critical_findings(scan_id=scan.id, target=scan.target, critical_count=critical_count)
             AuditService.log(

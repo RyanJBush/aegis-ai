@@ -31,6 +31,8 @@ type RawVuln = {
   assigned_owner?: string | null;
   notes?: string | null;
   created_at: string;
+  remediation_template?: { description: string; code_example: string; reference_url: string } | null;
+  cve_matches?: { cve_id: string; cvss_v3_base_score?: number | null; severity?: string | null; description: string; nvd_url: string }[];
 };
 
 type RawScanJob = {
@@ -124,7 +126,7 @@ function mapRawVulnerability(vuln: RawVuln): Vulnerability {
     confidence: vuln.confidence, reasonCode: vuln.reason_code, cweId: vuln.cwe_id, evidence: vuln.evidence,
     exampleRequest: vuln.example_request ?? undefined, exampleResponse: vuln.example_response ?? undefined,
     secureExample: vuln.secure_example ?? undefined, assignedOwner: vuln.assigned_owner ?? null, notes: vuln.notes ?? null,
-    observedAt: vuln.created_at,
+    observedAt: vuln.created_at, remediationTemplate: vuln.remediation_template ?? null, cveMatches: vuln.cve_matches ?? [],
   };
 }
 function mapJob(job: RawScanJob): ScanJob {
