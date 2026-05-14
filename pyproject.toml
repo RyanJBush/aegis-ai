@@ -1,0 +1,8 @@
+[project]
+name = "obsidian-platform"
+version = "0.4.0"
+description = "Obsidian secure application platform and AI vulnerability scanner"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+addopts = "-q"

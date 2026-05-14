@@ -1,5 +1,8 @@
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
 
+export type CVEMatch = { cve_id: string; cvss_v3_base_score?: number | null; severity?: string | null; description: string; nvd_url: string; };
+export type RemediationTemplate = { description: string; code_example: string; reference_url: string; };
+
 export type Vulnerability = {
   id: string;
   scanId?: string;
@@ -14,6 +17,8 @@ export type Vulnerability = {
   explanation: string;
   impact: string;
   remediation: string;
+  remediationTemplate?: RemediationTemplate | null;
+  cveMatches?: CVEMatch[];
   confidence?: number;
   reasonCode?: string;
   cweId?: string;

@@ -1,0 +1,22 @@
+{
+  "SQLI": {
+    "description": "Use parameterized queries and strict server-side input validation to prevent SQL injection.",
+    "code_example": "cursor.execute(\"SELECT * FROM users WHERE email = %s\", (email,))",
+    "reference_url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"
+  },
+  "XSS": {
+    "description": "Encode untrusted output and enforce a strict Content Security Policy.",
+    "code_example": "safe_name = html.escape(user_input)\nreturn f\"<p>{safe_name}</p>\"",
+    "reference_url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html"
+  },
+  "IDOR": {
+    "description": "Enforce authorization checks on every object lookup.",
+    "code_example": "if resource.owner_id != current_user.id:\n    raise HTTPException(status_code=403)",
+    "reference_url": "https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html"
+  },
+  "CSRF": {
+    "description": "Use CSRF tokens and same-site cookies for state-changing actions.",
+    "code_example": "<input type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token }}\" />",
+    "reference_url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+  }
+}

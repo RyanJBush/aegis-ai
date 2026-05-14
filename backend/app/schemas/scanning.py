@@ -103,3 +103,26 @@ class DevSecOpsSnippetScanRequest(BaseModel):
 class RemediationChecklistResponse(BaseModel):
     scan_id: int
     checklist: list[str]
+
+
+class ScanHistoryItem(BaseModel):
+    scan_id: int
+    target_url: str
+    scan_timestamp: datetime
+    total_findings: int
+    critical_count: int
+    high_count: int
+    medium_count: int
+    low_count: int
+    overall_risk_score: float
+
+
+class ScanTrendDelta(BaseModel):
+    target_url: str
+    latest_scan_id: int
+    previous_scan_id: int | None = None
+    critical_delta: int
+    high_delta: int
+    medium_delta: int
+    low_delta: int
+    risk_score_delta: float

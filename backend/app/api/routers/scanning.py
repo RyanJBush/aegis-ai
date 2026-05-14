@@ -16,6 +16,7 @@ from app.api.deps import get_workspace_id, require_roles
 from app.db.session import get_db
 from app.models.scan import Scan
 from app.models.scan_job import ScanJob
+from app.models.scan_history import ScanHistory
 from app.models.user import Role, User
 from app.models.vulnerability import Vulnerability
 from app.schemas.scanning import (
@@ -31,6 +32,8 @@ from app.schemas.scanning import (
     ScanResponse,
     ScanStatusUpdateRequest,
     ScanTrendResponse,
+    ScanHistoryItem,
+    ScanTrendDelta,
     SuppressionExport,
 )
 from app.schemas.vulnerability import KpiSummary
@@ -324,3 +327,29 @@ def get_kpi_summary(
     db: Session = Depends(get_db),
 ) -> KpiSummary:
     return VulnerabilityService.build_kpi_summary(db=db, workspace_id=workspace_id)
+
+
+@router.get("/history", response_model=list[ScanHistoryItem])
+def get_scan_history(
+    target: str,
+    workspace_id: int = Depends(get_workspace_id),
+    _: User = Depends(require_roles({Role.admin, Role.security_analyst, Role.developer, Role.viewer})),
+    db: Session = Depends(get_db),
+) -> list[ScanHistoryItem]:
+    rows = db.query(ScanHistory).filter(ScanHistory.workspace_id == workspace_id, ScanHistory.target_url == target).order_by(ScanHistory.scan_timestamp.asc()).all()
+    return [ScanHistoryItem.model_validate(r, from_attributes=True) for r in rows]
+
+
+@router.get("/trend", response_model=ScanTrendDelta)
+def get_scan_trend(
+    target: str,
+    workspace_id: int = Depends(get_workspace_id),
+    _: User = Depends(require_roles({Role.admin, Role.security_analyst, Role.developer, Role.viewer})),
+    db: Session = Depends(get_db),
+) -> ScanTrendDelta:
+    rows = db.query(ScanHistory).filter(ScanHistory.workspace_id == workspace_id, ScanHistory.target_url == target).order_by(ScanHistory.scan_timestamp.desc()).limit(2).all()
+    if not rows:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No scan history found for target")
+    latest = rows[0]
+    previous = rows[1] if len(rows) > 1 else None
+    return ScanTrendDelta(target_url=target, latest_scan_id=latest.scan_id, previous_scan_id=previous.scan_id if previous else None, critical_delta=latest.critical_count-(previous.critical_count if previous else 0), high_delta=latest.high_count-(previous.high_count if previous else 0), medium_delta=latest.medium_count-(previous.medium_count if previous else 0), low_delta=latest.low_count-(previous.low_count if previous else 0), risk_score_delta=latest.overall_risk_score-(previous.overall_risk_score if previous else 0.0))
